@@ -18,7 +18,9 @@ def test_fraud_check_endpoint() -> None:
         mock_consumer.start = AsyncMock()
         mock_consumer.stop = AsyncMock()
         client = TestClient(app, raise_server_exceptions=False)
-        resp = client.get("/api/v1/fraud/check?transaction_id=tx_test&user_id=usr_1&amount=500&country=US")
+        resp = client.post("/api/v1/fraud/check", params={
+            "transaction_id": "tx_test", "user_id": "usr_1", "amount": 500.0, "country": "US"
+        })
     assert resp.status_code == 200
     data = resp.json()
     assert "transaction_id" in data
@@ -35,7 +37,9 @@ def test_fraud_check_high_amount() -> None:
         mock_consumer.start = AsyncMock()
         mock_consumer.stop = AsyncMock()
         client = TestClient(app, raise_server_exceptions=False)
-        resp = client.get("/api/v1/fraud/check?transaction_id=tx_big&user_id=usr_2&amount=50000&country=US")
+        resp = client.post("/api/v1/fraud/check", params={
+            "transaction_id": "tx_big", "user_id": "usr_2", "amount": 50000.0, "country": "US"
+        })
     assert resp.status_code == 200
     data = resp.json()
     assert data["recommendation"] in ("VERIFY", "BLOCK")
