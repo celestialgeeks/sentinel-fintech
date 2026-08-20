@@ -10,12 +10,16 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://sentinel:sentinel_pass@postgres:5432/sentinel
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql+asyncpg://sentinel:${POSTGRES_PASSWORD:-sentinel_pass}@postgres:5432/sentinel
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-sentinel_redis_pass}@redis:6379/0
       - MILVUS_URI=http://milvus:19530
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9093
-      - KAFKA_SCHEMAREGISTRY=http://schema-registry:8081
-      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-me}
+      - KAFKA_SCHEMA_REGISTRY=http://schema-registry:8081
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-sentinel_neo4j_pass}
+      - JWT_SECRET=${JWT_SECRET:-change-this-to-a-secure-random-string}
+      - JWT_ALGORITHM=HS256
       - ENVIRONMENT=development
     depends_on:
       postgres:
@@ -26,6 +30,8 @@ services:
         condition: service_started
       kafka:
         condition: service_started
+      neo4j:
+        condition: service_healthy
     volumes:
       - ./src:/app/src
       - ./config:/app/config
@@ -41,7 +47,7 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_USER=sentinel
-      - POSTGRES_PASSWORD=sentinel_pass
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-sentinel_pass}
       - POSTGRES_DB=sentinel
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -63,9 +69,9 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes --requirepass sentinel_redis_pass
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-sentinel_redis_pass}
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "sentinel_redis_pass", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-sentinel_redis_pass}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -99,8 +105,8 @@ services:
     container_name: sentinel-minio
     command: server /minio_data --console-address ":9001"
     environment:
-      - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
+      - MINIO_ROOT_USER=${MINIO_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD:-minioadmin}
     volumes:
       - minio_data:/minio_data
     networks:
@@ -126,6 +132,28 @@ services:
     depends_on:
       - etcd
       - minio
+
+  # ─── Neo4j (Graph Database) ────────────────────────────────
+  neo4j:
+    image: neo4j:5.22.0
+    container_name: sentinel-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-sentinel_neo4j_pass}
+      - NEO4J_PLUGINS=["apoc"]
+    volumes:
+      - neo4j_data:/data
+      - ./config/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p ${NEO4J_PASSWORD:-sentinel_neo4j_pass} 'RETURN 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - sentinel-net
 
   # ─── Kafka ─────────────────────────────────────────────────
   zookeeper:
@@ -190,6 +218,7 @@ volumes:
   etcd_data:
   minio_data:
   milvus_data:
+  neo4j_data:
   prometheus_data:
   grafana_data:
 

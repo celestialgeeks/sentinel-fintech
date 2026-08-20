@@ -169,23 +169,61 @@ def mock_kafka_consumer():
     return consumer
 
 
-# ---------------------------------------------------------------------------
-# FastAPI test client (when app is available)
-# ---------------------------------------------------------------------------
+# ─── Neo4j mock fixture ────────────────────────────────────
+
+class _FakeNeo4j:
+    """In-memory mock mimicking Neo4jClient for unit tests."""
+
+    def __init__(self) -> None:
+        self._nodes: dict[str, dict] = {}
+        self._edges: list[dict] = []
+
+    async def connect(self) -> None:
+        pass
+
+    async def close(self) -> None:
+        self._nodes.clear()
+        self._edges.clear()
+
+    async def run_query(self, query: str, params: dict | None = None) -> list[dict]:
+        return []
+
+    async def write_query(self, query: str, params: dict | None = None) -> None:
+        pass
+
+    async def create_entity(self, entity_id: str, entity_type: str, properties: dict | None = None) -> None:
+        self._nodes[entity_id] = {"id": entity_id, "type": entity_type, ** (properties or {})}
+
+    async def create_relationship(self, source_id: str, target_id: str, rel_type: str, properties: dict | None = None) -> None:
+        self._edges.append({"source": source_id, "target": target_id, "type": rel_type, **(properties or {})})
+
+    async def find_fraud_rings(self, seed_entity_id: str, depth: int = 2) -> list[dict]:
+        return []
+
+    async def find_shared_attributes(self, entity_ids: list[str], attribute: str = "device_fingerprint") -> list[dict]:
+        return []
+
 
 @pytest_asyncio.fixture
-async def client(db_session, mock_redis, mock_milvus, mock_kafka_producer):
+async def mock_neo4j() -> AsyncGenerator[_FakeNeo4j, None]:
+    client = _FakeNeo4j()
+    yield client
+    await client.close()
+
+@pytest_asyncio.fixture
+async def client(db_session, mock_redis, mock_milvus, mock_kafka_producer, mock_neo4j):
     """Override shared singletons and return an async TestClient."""
-    # Patch module-level singletons for the test
     import src.shared.db as db_module  # noqa: PLC0415
     import src.shared.cache as cache_module  # noqa: PLC0415
     import src.shared.vector_db as vdb_module  # noqa: PLC0415
     import src.shared.kafka as kafka_module  # noqa: PLC0415
+    import src.shared.graph_db as graph_module  # noqa: PLC0415
 
-    db_module.engine = test_engine
-    cache_module.redis_client = mock_redis
-    vdb_module.milvus_client = mock_milvus
-    kafka_module.kafka_producer = mock_kafka_producer
+    db_module.engine = test_engine  # type: ignore[attr-defined]
+    cache_module.redis_client = mock_redis  # type: ignore[attr-defined]
+    vdb_module.milvus_client = mock_milvus  # type: ignore[attr-defined]
+    kafka_module.kafka_producer = mock_kafka_producer  # type: ignore[attr-defined]
+    graph_module.neo4j_client = mock_neo4j  # type: ignore[attr-defined]
 
     from fastapi.testclient import TestClient  # noqa: PLC0415
     from src.api.main import app  # noqa: PLC0415

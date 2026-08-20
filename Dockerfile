@@ -15,9 +15,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY ./src /app/src
 COPY ./config /app/config
+COPY ./alembic.ini /app/alembic.ini
+COPY ./pyproject.toml /app/pyproject.toml
 
 # Create non-root user
-RUN useradd -m -u 1000 sentinel
+RUN groupadd -r sentinel && useradd -r -g sentinel sentinel
+RUN chown -R sentinel:sentinel /app
 USER sentinel
 
 # Expose API port
