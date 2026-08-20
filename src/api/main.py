@@ -13,6 +13,8 @@ from src.shared.db import engine, init_db
 from src.shared.cache import redis_client
 from src.shared.kafka import kafka_producer, kafka_consumer
 from src.fraud.routers import router as fraud_router
+from src.api.routers.screening import router as screening_router
+from src.api.routers.merchant import router as merchant_router
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +82,12 @@ async def health() -> dict[str, str]:
 
 # ─── Mount routes ─────────────────────────────────────────────────────────────
 from src.fraud.routers import router as fraud_router  # noqa: E402
-app.include_router(fraud_router, prefix="/api/v1/fraud")
+from src.api.routers.screening import router as screening_router  # noqa: E402
+from src.api.routers.merchant import router as merchant_router  # noqa: E402
+
+app.include_router(fraud_router, prefix="/api/v1")
+app.include_router(screening_router, prefix="/api/v1")
+app.include_router(merchant_router, prefix="/api/v1")
 
 
 logger.info("FastAPI app factory loaded")
