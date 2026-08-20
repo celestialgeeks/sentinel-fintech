@@ -48,7 +48,7 @@ class ScreeningEngine:
 
         # 4. Update risk score with watchlist hits
         if watchlist_matches:
-            max_match_weight = max(m.match_score for m in watchlist_matches)
+            max_match_weight = max(m.risk_weight for m in watchlist_matches)
             risk_score = max(risk_score, max_match_weight)
 
         # 5. Collect flags
