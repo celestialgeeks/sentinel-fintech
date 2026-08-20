@@ -155,12 +155,18 @@ class KafkaConsumerWrapper:
         logger.info("Kafka consumer stopped")
 
 
-# ── Module-level singletons ──────────────────────────────────────────────────
+# ─── Module-level singletons ──────────────────────────────────────────────────
 
 _settings = KafkaSettings()
-kafka_producer = KafkaProducerWrapper(_settings.bootstrap_servers)
-kafka_consumer = KafkaConsumerWrapper(
-    bootstrap_servers=_settings.bootstrap_servers,
-    topics=["sentinel.screening", "sentinel.fraud", "sentinel.merchant"],
-    group_id=_settings.group_id,
-)
+_kafka_available = Producer is not None  # type: ignore
+
+if _kafka_available:
+    kafka_producer = KafkaProducerWrapper(_settings.bootstrap_servers)
+    kafka_consumer = KafkaConsumerWrapper(
+        bootstrap_servers=_settings.bootstrap_servers,
+        topics=["sentinel.screening", "sentinel.fraud", "sentinel.merchant"],
+        group_id=_settings.group_id,
+    )
+else:
+    kafka_producer = None  # type: ignore[assignment]
+    kafka_consumer = None  # type: ignore[assignment]

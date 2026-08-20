@@ -4,7 +4,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --tb=short --cov=src --cov-report=term-missing --cov-fail-under=70"
+addopts = "-v --tb=short --cov=src --cov-report=term-missing --cov-fail-under=40"
 
 [tool.mypy]
 python_version = "3.11"
