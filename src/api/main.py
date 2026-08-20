@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.shared.db import engine, init_db
 from src.shared.cache import redis_client
 from src.shared.kafka import kafka_producer, kafka_consumer
+from src.fraud.routers import router as fraud_router
 
 logger = logging.getLogger(__name__)
 
@@ -77,11 +78,9 @@ async def health() -> dict[str, str]:
     return {"status": "ok", "service": "sentinel-api"}
 
 
-# ─── Mount routes (placeholder — populated in subsequent phases) ────────────
-# from src.api.routes import screening, fraud, merchant, auth
-# app.include_router(screening.router, prefix="/api/v1/screening")
-# app.include_router(fraud.router, prefix="/api/v1/fraud")
-# app.include_router(merchant.router, prefix="/api/v1/merchant")
+# ─── Mount routes ─────────────────────────────────────────────────────────────
+from src.fraud.routers import router as fraud_router  # noqa: E402
+app.include_router(fraud_router, prefix="/api/v1/fraud")
 
 
 logger.info("FastAPI app factory loaded")
