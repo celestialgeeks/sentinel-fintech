@@ -1,0 +1,35 @@
+# ─── Milvus Vector Database ──────────────────────────────────────────────────
+milvus:
+  uri: "${MILVUS_URI:-http://localhost:19530}"
+  collection:
+    name: "entities"
+    dimension: 384
+    index_type: IVF_FLAT
+    metric_type: IP
+    nlist: 128
+    nprobe: 16
+
+  search:
+    default_limit: 10
+    default_score_threshold: 0.5
+
+  collections:
+    entities:
+      fields:
+        - name: id
+          type: VARCHAR
+          max_length: 64
+          primary: true
+        - name: entity_type
+          type: VARCHAR
+          max_length: 32
+        - name: name
+          type: VARCHAR
+          max_length: 256
+        - name: embedding
+          type: FLOAT_VECTOR
+          dim: 384
+        - name: metadata
+          type: JSON
+        - name: score
+          type: FLOAT

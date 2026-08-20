@@ -1,0 +1,28 @@
+# ─── Apache Kafka ────────────────────────────────────────────────────────────
+kafka:
+  bootstrap_servers:
+    - "kafka:9093"
+    - "localhost:9092"
+
+  producer:
+    compression_type: lz4
+    max_request_size: 1048576
+    acks: all
+    retries: 3
+
+  consumer:
+    group_id: "sentinel"
+    auto_offset_reset: earliest
+    enable_auto_commit: false
+    session_timeout_ms: 30000
+    max_poll_records: 500
+
+  topics:
+    screening_events: "sentinel.screening"
+    fraud_events: "sentinel.fraud"
+    merchant_events: "sentinel.merchant"
+    alert_queue: "sentinel.alerts"
+
+  schema_registry:
+    url: "${KAFKA_SCHEMA_REGISTRY:-http://localhost:8081}"
+    basic_auth_user_info: ""

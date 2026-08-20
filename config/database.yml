@@ -1,0 +1,10 @@
+# ─── PostgreSQL / SQLAlchemy ─────────────────────────────────────────────────
+database:
+  url: "${DATABASE_URL:-postgresql+asyncpg://sentinel:password@localhost:5432/sentinel}"
+  pool_size: 20
+  max_overflow: 10
+  pool_pre_ping: true
+  echo: false
+
+# Connection strings for direct library consumption
+# SQLAlchemy uses the URL above; psycopg2-binary handles sync when needed.
