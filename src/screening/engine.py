@@ -61,7 +61,7 @@ class ScreeningEngine:
             if r.triggered:
                 explanation_parts.append(r.detail)
         for m in watchlist_matches:
-            explanation_parts.append(f"Watchlist match: {m.name} ({m.list_source}, score={m.match_score:.2f})")
+            explanation_parts.append(f"Watchlist match: {m.name} ({m.list_source}, score={m.risk_weight:.2f})")
         explanation = "; ".join(explanation_parts) if explanation_parts else "No rules or watchlist matches triggered"
 
         # 7. Determine recommendation
