@@ -14,7 +14,7 @@ from src.fraud.scorer import FraudScorer
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["fraud"])
+router = APIRouter(prefix="/fraud", tags=["fraud"])
 
 # Module-level state (in production, inject via Depends)
 _profiler = BehavioralProfiling()
