@@ -1,0 +1,199 @@
+{
+  "architecture": "Sentinel is a production-grade, real-time fraud detection MLOps platform built on an event-driven microservices architecture. The core design follows a layered pipeline: (1) Data Ingestion Layer — Kafka for high-throughput transaction streaming and Redis Streams for low-latency in-memory event buffering; (2) Processing Layer — FastAPI microservices for feature engineering, rule-based scoring, and ML inference; (3) Intelligence Layer — LangChain/LlamaIndex agents for semantic analysis and RAG-based fraud investigation, Neo4j graph database for fraud ring detection, and vector databases (Milvus/ChromaDB) for embedding-based anomaly detection; (4) Persistence Layer — PostgreSQL for transactional metadata, Redis for hot feature serving, and object storage (MinIO) for model artifacts; (5) Orchestration Layer — Apache Airflow for scheduled retraining pipelines and Kubernetes for production container orchestration. The system achieves sub-100ms fraud scoring latency with a hybrid detection approach combining rule-based engines, ML models, and graph-based connected-entity analysis.",
+  "tech_stack": {
+    "microservices": {
+      "framework": "FastAPI (Python 3.10+)",
+      "reasoning": "Async-native, high throughput (200k+ daily users, 80 req/s), automatic OpenAPI docs, Pydantic validation",
+      "alternatives": "Flask (simpler but slower), Spring Boot (Java, heavier but battle-tested in banking)"
+    },
+    "event_streaming": {
+      "primary": "Apache Kafka",
+      "role": "High-throughput transaction ingestion, pub/sub between microservices, replayable event log",
+      "secondary": "Redis Streams",
+      "role": "Low-latency in-memory event buffering, velocity checks, sliding window aggregates",
+      "library": "confluent-kafka, redis-py, kafka-python"
+    },
+    "databases": {
+      "relational": {
+        "engine": "PostgreSQL 15+",
+        "role": "Transaction metadata, user accounts, model registry, audit logs",
+        "extension": "pgvector for lightweight vector search (up to ~10M vectors)"
+      },
+      "vector_db": {
+        "milvus": {
+          "role": "Billion-scale vector search, embedding-based anomaly detection, RAG retrieval",
+          "strengths": "Distributed architecture, separate compute/storage scaling, hybrid search (vector + keyword + metadata)",
+          "deployment": "Milvus Standalone (tens of M vectors) or Distributed (hundreds of M+) via Kubernetes",
+          "library": "pymilvus"
+        },
+        "chromadb": {
+          "role": "Lightweight development/prototyping, smaller-scale semantic search",
+          "strengths": "Embedded mode (no server), simple API, built-in embeddings",
+          "limitation": "Not designed for horizontal scaling beyond ~10M vectors",
+          "library": "chromadb"
+        },
+        "recommendation": "Use Milvus for production at scale; ChromaDB for prototyping or small deployments"
+      },
+      "in_memory": {
+        "engine": "Redis 7+",
+        "role": "Hot feature store (Feast online store), session state, rate limiting, sliding window fraud checks",
+        "module": "RedisJSON, RediSearch for vector similarity in-memory",
+        "library": "redis, redisvl"
+      },
+      "graph": {
+        "engine": "Neo4j 5.x",
+        "role": "Fraud ring detection, entity resolution, multi-hop relationship analysis, connected-party risk scoring",
+        "query_language": "Cypher",
+        "library": "neo4j (Python driver), py2neo"
+      }
+    },
+    "llm_agent_frameworks": {
+      "langchain": {
+        "role": "Multi-step fraud investigation agents, tool orchestration, RAG pipelines, explainable AI reasoning chains",
+        "strengths": "Agent patterns (Zero-shot ReAct), tool integration, memory management, multi-agent orchestration",
+        "best_for": "Complex fraud workflows requiring reasoning, tool calling, and audit trails",
+        "library": "langchain, langchain-core, langchain-openai, langgraph"
+      },
+      "llamaindex": {
+        "role": "Document-heavy compliance monitoring, regulatory filing analysis, semantic search over fraud knowledge bases",
+        "strengths": "Superior retrieval accuracy, efficient caching, source traceability for compliance",
+        "best_for": "RAG over financial documents, regulatory text search, cost-optimized deployments",
+        "library": "llama-index, llama-index-core"
+      },
+      "recommendation": "LangChain for agent-driven fraud investigation; LlamaIndex for document retrieval and compliance RAG"
+    },
+    "ocr_document_processing": {
+      "engines": {
+        "tesseract": {
+          "role": "Fast CPU-only OCR for clean printed documents, invoices, receipts",
+          "strengths": "10MB install, 3x faster on CPU, no GPU required, 100+ languages",
+          "limitation": "Struggles with noisy/handwritten documents",
+          "library": "pytesseract, pillow"
+        },
+        "easyocr": {
+          "role": "High-accuracy OCR for complex, noisy, multi-language, or handwritten documents",
+          "strengths": "Deep learning pipeline, 80+ languages, GPU acceleration, structured output with confidence scores",
+          "limitation": "500MB install, slower on CPU",
+          "library": "easyocr"
+        },
+        "production_pattern": "Dual-engine routing: Tesseract for clean documents (speed), EasyOCR for difficult ones (accuracy). Use a lightweight classifier (image entropy, resolution check) to route."
+      },
+      "preprocessing": {
+        "library": "opencv-python, pillow",
+        "pipeline": "Grayscale → CLAHE contrast boost → Denoise (Gaussian/bilateral) → Adaptive threshold → Skew correction → Deskew",
+        "postprocessing": "NLP-based entity extraction (spaCy, regex) for structured fields (invoice #, amount, date)"
+      }
+    },
+    "web_scraping": {
+      "lightweight": {
+        "library": "requests + BeautifulSoup4",
+        "role": "Static HTML merchant reputation data, review aggregation, price monitoring"
+      },
+      "scrapy": {
+        "library": "scrapy",
+        "role": "Large-scale structured scraping, merchant profile aggregation, complaint database mining",
+        "strengths": "Built-in item pipelines, middleware for retries/IP rotation, async support"
+      },
+      "dynamic_content": {
+        "library": "playwright or selenium",
+        "role": "JavaScript-rendered merchant sites, real-time reputation data"
+      },
+      "fraud_specific": "Scrape BBB complaints, consumer review sites, chargeback databases, and merchant rating platforms to build reputation scores"
+    },
+    "ml_frameworks": {
+      "training": "scikit-learn (RandomForest, XGBoost, LightGBM), imbalanced-learn (SMOTE for class imbalance)",
+      "experiment_tracking": "MLflow (model versioning, metrics, artifact storage)",
+      "feature_store": "Feast (offline Parquet + online Redis serving)",
+      "monitoring": "Prometheus + Grafana for model drift, latency, and throughput"
+    },
+    "deployment": {
+      "containerization": {
+        "tool": "Docker",
+        "pattern": "Multi-stage builds, non-root users, slim base images (python:3.10-slim), .dockerignore for security"
+      },
+      "orchestration": {
+        "development": "Docker Compose (9+ services: API, MLflow, Airflow, PostgreSQL, Redis, Milvus, Neo4j, MinIO, Streamlit)",
+        "production": "Kubernetes (EKS/GKE/AKS)",
+        "k8s_components": {
+          "deployments": "Stateless FastAPI services, MLflow server, Airflow workers",
+          "statefulsets": "PostgreSQL, Redis, Milvus coordinators/data/query nodes, Neo4j",
+          "services": "ClusterIP for internal, LoadBalancer/Ingress for API gateway",
+          "configmaps_secrets": "Environment variables, API keys, database credentials",
+          "hpa": "Auto-scaling on CPU/memory/custom metrics (Kafka lag)"
+        }
+      },
+      "ci_cd": "GitHub Actions for build/test/deploy, ArgoCD for GitOps deployment"
+    }
+  },
+  "open_source_tools": [
+    "FastAPI",
+    "Apache Kafka",
+    "Redis",
+    "PostgreSQL",
+    "Milvus",
+    "ChromaDB",
+    "Neo4j",
+    "LangChain",
+    "LlamaIndex",
+    "Tesseract OCR",
+    "EasyOCR",
+    "OpenCV",
+    "Scrapy",
+    "BeautifulSoup4",
+    "Playwright",
+    "Feast",
+    "MLflow",
+    "Apache Airflow",
+    "Docker",
+    "Kubernetes",
+    "Prometheus",
+    "Grafana",
+    "MinIO",
+    "Streamlit",
+    "scikit-learn",
+    "imbalanced-learn",
+    "XGBoost",
+    "LightGBM",
+    "spaCy",
+    "Pydantic",
+    "confluent-kafka",
+    "pymilvus",
+    "redis-py",
+    "neo4j (Python driver)"
+  ],
+  "implementation_patterns": [
+    "Event-Driven Microservices Architecture: Kafka pub/sub decouples ingestion, processing, and alerting services",
+    "Dual-Engine OCR Routing: Lightweight classifier routes documents to Tesseract (speed) or EasyOCR (accuracy) based on image quality metrics",
+    "Feature Store Pattern (Feast): Unified offline (Parquet) and online (Redis) feature serving to prevent training-serving skew",
+    "RAG-Based Fraud Investigation: LangChain agents retrieve historical fraud cases from Milvus/ChromaDB to provide context-aware investigation reports",
+    "Graph-Based Fraud Ring Detection: Neo4j Cypher queries identify connected entities sharing phone/email/device — constant-complexity vs exponential SQL self-joins",
+    "Multi-Layer Fraud Scoring: Rule engine (velocity checks, blacklist) + ML model (anomaly score) + Graph score (ring membership) → weighted ensemble",
+    "Sliding Window Aggregates: Redis Streams + Redis Sorted Sets for real-time transaction velocity, amount anomaly, and geo-improbability checks",
+    "Hybrid Search in Vector DB: Milvus supports vector similarity + metadata filters + full-text keyword search for comprehensive fraud pattern matching",
+    "MLflow Model Registry: Version-controlled model deployment with A/B testing support and automatic rollback on drift detection",
+    "Circuit Breaker Pattern: Resilience4j or pybreaker for downstream service failures (e.g., OCR service timeout → fallback to cached result)",
+    "Dead Letter Queue (DLQ): Kafka DLQ for failed fraud events requiring manual investigation",
+    "Semantic Cache (CacheGPT): Milvus-backed semantic cache stores LLM responses to reduce API costs and latency on repeated queries",
+    "Zero-Shot ReAct Agent: LangChain agents reason through fraud investigations step-by-step, calling tools (APIs, DB queries) autonomously",
+    "Dual-Index Strategy: pgvector for lightweight vector search in PostgreSQL (development) → Milvus for production scale",
+    "Immutable Audit Trail: All fraud decisions logged to PostgreSQL with model version, features used, and confidence score for compliance"
+  ],
+  "sources": [
+    "https://github.com/Duks31/fraud-detection-platform (Sentinel MLOps Platform)",
+    "https://github.com/MohitGupta0123/Fraud_Detection_MLOps",
+    "https://github.com/AjayAlluri/realtime-fraud-detection",
+    "https://github.com/Buffden/ringnet (Neo4j fraud ring detection)",
+    "https://neo4j.com/blog/developer/detect-bank-fraud-neo4j-graph-database",
+    "https://www.confluent.io/use-case/fraud-detection",
+    "https://markaicode.com/architecture/vector-database-architecture-with-github-copilot",
+    "https://www.data-dynamics.io/en/blog/vector-database-comparison",
+    "https://www.codesota.com/ocr/tesseract-vs-easyocr",
+    "https://smartdev.com/jp/langchain-vs-llamaindex-fintech-ai",
+    "https://blog.apilayer.com/build-an-ai-agent-for-fraud-detection-using-python-langchain-and-ipstack/",
+    "https://xenoss.io/solutions/fraud-detection",
+    "https://arxiv.org/html/2501.15290v1 (Advanced Real-Time Fraud Detection Using RAG-Based LLMs)",
+    "https://www.ijcaonline.org/archives/volume187/number60/event-driven-fraud-detection-pipeline/",
+    "https://codingram.github.io/blog/building-scalable-microservices-fastapi-kubernetes",
+    "https://learn.microsoft.com/en-us/fabric/real-time-intelligence/architectures/fraud-detection"
+  ]
+}

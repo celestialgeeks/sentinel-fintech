@@ -1,0 +1,115 @@
+{
+  "title": "Sentinel — AI-Powered FinTech Compliance & Risk Platform",
+  "subtitle": "Real-time AML Screening · Fraud Detection · Merchant Onboarding",
+  "author": "[Your Team Name]",
+  "institution": "IPS Academy, Indore (RGPV University)",
+  "department": "CSE-AIML",
+  "year": "2026–27",
+  "slides": [
+    {
+      "number": 1,
+      "title": "Title Slide",
+      "id": "slide-1",
+      "notes": "Welcome. Sentinel is an AI-powered FinTech compliance platform built as a B.Tech Major Project at IPS Academy, Indore. It unifies three critical pillars — transaction screening, fraud detection, and merchant onboarding — on a single event-streaming backbone. Today I'll walk you through the problem, our solution, architecture, and results."
+    },
+    {
+      "number": 2,
+      "title": "The Compliance Crisis in FinTech",
+      "id": "slide-2",
+      "notes": "The compliance crisis is real. UPI alone does 15 billion transactions a month. Legacy rule engines hit 94% false positives. Synthetic identity fraud surged 311% in one year. Regulators like RBI and OFAC now demand real-time monitoring with explainability. The average major bank fine is $2.7 billion. We're drowning in volume and noise."
+    },
+    {
+      "number": 3,
+      "title": "Why Current Systems Fail",
+      "id": "slide-3",
+      "notes": "Why do current systems fail? Three categories: Legacy rule engines are rigid and miss aliasing. Legacy ML pipelines use static features and miss fraud rings. Commercial RegTech SaaS is closed, expensive, and unexplainable. The market is fragmented. Sentinel is open, unified, and explainable by design."
+    },
+    {
+      "number": 4,
+      "title": "Project Objectives",
+      "id": "slide-4",
+      "notes": "Our five objectives: One, unify AML, fraud, and KYB. Two, cut false positives by 50% using vector matching and LLM entity resolution. Three, detect fraud rings with GNNs at 95%+ AUC. Four, onboard low-risk merchants in under 5 minutes via RAG. Five, deliver a production-grade open alternative to closed SaaS."
+    },
+    {
+      "number": 5,
+      "title": "The Sentinel Solution",
+      "id": "slide-5",
+      "notes": "Sentinel has three pillars. Pillar 1: Transaction Screening with 98% recall. Pillar 2: Fraud Detection with 97.5% accuracy via GNNs. Pillar 3: Merchant Approval in under 5 minutes. All three share a Kafka event bus so risk context flows in real time — screening hits enrich fraud profiles, fraud signals tighten merchant scoring."
+    },
+    {
+      "number": 6,
+      "title": "System Architecture",
+      "id": "slide-6",
+      "notes": "Six-layer architecture. Client layer talks to FastAPI gateway. Kafka event bus connects screening engine, fraud engine, and merchant engine. Data layer: PostgreSQL for ACID, Milvus for vectors, Neo4j for graphs. 10 Docker services, 42 tests passing, 52% coverage."
+    },
+    {
+      "number": 7,
+      "title": "Core Technology Stack",
+      "id": "slide-7",
+      "notes": "Tech stack: FastAPI, Python 3.11, Kafka, Redis, PostgreSQL, Milvus, Neo4j. AI with LangChain, LlamaIndex, HuggingFace. ML with XGBoost, PyTorch Geometric. OCR dual-engine. Infra with Docker, Kubernetes, Prometheus, Grafana. GitHub Actions CI/CD."
+    },
+    {
+      "number": 8,
+      "title": "Pillar 1 — Intelligent Transaction Screening",
+      "id": "slide-8",
+      "notes": "Pillar 1: Transaction Screening. Five stages — ingest, NER with LLM entity resolution, vector fuzzy match in Milvus, AML rule engine, hybrid decision. The demo shows \"Mohammed Ahmed\" flagged against \"Mohammed Al-Ahmed\" at 0.94 similarity. 47K screened today, 12 hits, 891 false positives blocked. OpenSanctions Pairs benchmark: 98.23% F1."
+    },
+    {
+      "number": 9,
+      "title": "Pillar 2 — Fraud Detection & Agentic Triage",
+      "id": "slide-9",
+      "notes": "Pillar 2: Fraud Detection. Two layers — detection with GNN on Neo4j for fraud rings, plus XGBoost for tabular signals. The differentiator: agentic triage. An autonomous LLM agent pre-investigates high-risk alerts, correlates across transactions, devices, graph neighborhoods, and hands a summarized risk dossier to human analysts. 97.5% accuracy vs 93.2% traditional ML."
+    },
+    {
+      "number": 10,
+      "title": "Pillar 3 — Automated Merchant Onboarding",
+      "id": "slide-10",
+      "notes": "Pillar 3: Merchant Onboarding. Kanban flow: auto-approve, manual review, auto-reject. RAG extracts facts from incorporation docs, tax IDs, bank statements. Dynamic risk scoring combines document confidence, behavioral priors, network signals. 1,247 onboarded today, average 4 minutes 12 seconds. Full audit trail for regulators."
+    },
+    {
+      "number": 11,
+      "title": "Implementation Roadmap",
+      "id": "slide-11",
+      "notes": "Five phases over 20 weeks. Phase 1: Foundation — repo, Docker, schemas, FastAPI. Phase 2: Screening Engine — AML rules, entity resolution, vector matching. Phase 3: Fraud Detection — behavioral profiling, GNN rings, agentic triage. Phase 4: Merchant Approval — KYB/KYC, RAG, risk scoring. Phase 5: Integration — E2E pipeline, CI/CD, monitoring, docs."
+    },
+    {
+      "number": 12,
+      "title": "Results & Validation",
+      "id": "slide-12",
+      "notes": "Results: 98% AML recall, 60% false positive reduction. 97.5% fraud accuracy vs 93.2% baseline. Sub-5-minute merchant onboarding. 42 tests, 52% coverage, clean Docker deploy. Research backed by arXiv papers with 200+ citations each. Federal Reserve and IJPREMS references."
+    },
+    {
+      "number": 13,
+      "title": "Impact, Limitations & Future Work",
+      "id": "slide-13",
+      "notes": "Impact: Open-source alternative to closed SaaS. Explainable by design. Unifies fragmented market. Limitations: synthetic data testing, LLM latency costs, GNN cold-start needs labeled data. Future: Flink + vLLM for real-time inference, federated learning, analyst copilot, FedRAMP pathway. GitHub: celestialgeeks/sentinel-fintech. Open to collaboration."
+    }
+  ],
+  "theme": {
+    "name": "cyber-finance",
+    "palette": {
+      "bg-obsidian": "#0A0E1A",
+      "bg-ink": "#060812",
+      "accent-mint": "#00E5A8",
+      "alert-red": "#FF3B5C",
+      "steel": "#6B7A99",
+      "snow": "#F4F6FA"
+    },
+    "typography": {
+      "mono": "JetBrains Mono",
+      "display": "Inter",
+      "body": "IBM Plex Sans"
+    }
+  },
+  "exports": {
+    "html": "index.html",
+    "styles": "styles.css",
+    "print": "print.css",
+    "script": "deck.js",
+    "visuals": {
+      "pillar1": "visuals/pillar1.html",
+      "pillar2": "visuals/pillar2.html",
+      "pillar3": "visuals/pillar3.html"
+    }
+  }
+}

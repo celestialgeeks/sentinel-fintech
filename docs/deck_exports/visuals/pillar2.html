@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentinel — Pillar 2: Fraud Detection & Agentic Triage</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { min-height: 100vh; padding: var(--space-2xl); }
+    .circuit-grid { opacity: 0.08; }
+    .container { max-width: 1300px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: var(--space-2xl); }
+    .header h1 { margin-bottom: var(--space-sm); }
+    .header p { color: var(--steel); max-width: 600px; margin: 0 auto; }
+    .fraud-graph-container { display: grid; grid-template-columns: 1.5fr 1fr; gap: var(--space-lg); }
+    .graph-canvas { position: relative; width: 100%; height: 450px; background: var(--bg-ink); border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <div class="circuit-grid" aria-hidden="true"></div>
+  <div class="container">
+    <header class="header">
+      <h1>Pillar 2 — Fraud Detection & Agentic Triage</h1>
+      <p>Behavioral profiling + Graph Neural Network fraud-ring detection + agentic alert triage</p>
+    </header>
+
+    <div class="fraud-graph-container">
+      <div class="graph-canvas" id="fraudGraph" role="img" aria-label="Force-directed fraud ring graph with 10 nodes, 4 red ring nodes"></div>
+      <details class="dossier-card" open style="height: 450px;">
+        <summary>📋 Alert #A-47392 · Risk Score <span class="dossier-score">0.87</span> · Status: Pre-investigated by Agent</summary>
+        <div class="dossier-section">
+          <summary>Transaction History</summary>
+          <div class="dossier-content">12 txns in 4h · ₹2.3M total · 3 high-risk jurisdictions · Structuring pattern detected (₹49,900 × 8)</div>
+        </div>
+        <div class="dossier-section">
+          <summary>Device Fingerprint Cluster</summary>
+          <div class="dossier-content">3 devices · Same browser fingerprint · 2 emulator signatures · GPS spoofing detected</div>
+        </div>
+        <div class="dossier-section">
+          <summary>Graph Neighborhood</summary>
+          <div class="dossier-content">Connected to 4 known mule accounts · 2-hop path to sanctioned entity · Ring centrality: 0.91</div>
+        </div>
+        <div class="dossier-section">
+          <summary>Behavioral Deviation</summary>
+          <div class="dossier-content">Velocity: +847% vs baseline · Amount variance: 3.2σ · Session duration: 12s (typical: 4m)</div>
+        </div>
+        <div class="dossier-section">
+          <summary>Recommended Action</summary>
+          <div class="dossier-content" style="color: var(--alert-red);"><strong>BLOCK & ESCALATE</strong> — High-confidence fraud ring. Auto-freeze linked accounts. File SAR within 24h.</div>
+        </div>
+      </details>
+    </div>
+
+    <div class="stat-strip" style="margin-top: var(--space-lg);">
+      <div><span class="val">97.5%</span> accuracy (GNN)</div>
+      <div><span class="val">4.2s</span> avg triage time</div>
+      <div><span class="val">78%</span> alerts auto-resolved</div>
+      <div><span class="val">93.2%</span> traditional ML baseline</div>
+    </div>
+
+    <div class="grid-2" style="margin-top: var(--space-xl);">
+      <div class="panel">
+        <h3 style="margin-bottom: var(--space-sm); display: flex; align-items: center; gap: var(--space-sm);"><span class="dot"></span> Graph Neural Network</h3>
+        <p>PyTorch Geometric on Neo4j. 10-node fraud ring detection with 97.5% accuracy vs 93.2% traditional ML (arXiv:2411.05815, 217 citations). Detects collusion, synthetic identities, mule networks.</p>
+      </div>
+      <div class="panel">
+        <h3 style="margin-bottom: var(--space-sm); display: flex; align-items: center; gap: var(--space-sm);"><span class="dot"></span> Agentic Triage</h3>
+        <p>Autonomous LLM agent pre-investigates high-risk alerts. Correlates transactions, devices, IPs, behavioral history, graph neighborhood. Hands summarized risk dossier to analysts — not raw alerts. 78% auto-resolved.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Force-directed fraud graph
+    const canvas = document.getElementById('fraudGraph');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    const nodes = [
+      { id: 0, x: 0.5, y: 0.3, ring: true, label: 'A' },
+      { id: 1, x: 0.3, y: 0.15, ring: true, label: 'B' },
+      { id: 2, x: 0.7, y: 0.15, ring: true, label: 'C' },
+      { id: 3, x: 0.5, y: 0.45, ring: true, label: 'D' },
+      { id: 4, x: 0.2, y: 0.5, ring: false, label: 'E' },
+      { id: 5, x: 0.8, y: 0.5, ring: false, label: 'F' },
+      { id: 6, x: 0.35, y: 0.7, ring: false, label: 'G' },
+      { id: 7, x: 0.65, y: 0.7, ring: false, label: 'H' },
+      { id: 8, x: 0.1, y: 0.3, ring: false, label: 'I' },
+      { id: 9, x: 0.9, y: 0.3, ring: false, label: 'J' },
+    ];
+    const edges = [[0,1],[0,2],[0,3],[1,4],[1,8],[2,5],[2,9],[3,6],[3,7],[4,8],[5,9],[6,7],[0,4],[0,5]];
+
+    let time = 0;
+    function draw() {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width, h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+
+      edges.forEach(([a, b]) => {
+        const n1 = nodes[a], n2 = nodes[b];
+        ctx.beginPath();
+        ctx.moveTo(n1.x * w, n1.y * h);
+        ctx.lineTo(n2.x * w, n2.y * h);
+        ctx.strokeStyle = 'rgba(107, 122, 153, 0.3)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
+
+      nodes.forEach(node => {
+        const px = node.x * w, py = node.y * h;
+        const pulse = node.ring ? Math.sin(time * 3) * 3 : 0;
+        const r = 14 + pulse;
+
+        if (node.ring) {
+          const gradient = ctx.createRadialGradient(px, py, 0, px, py, r + 10);
+          gradient.addColorStop(0, 'rgba(255, 59, 92, 0.4)');
+          gradient.addColorStop(1, 'rgba(255, 59, 92, 0)');
+          ctx.beginPath();
+          ctx.arc(px, py, r + 10, 0, Math.PI * 2);
+          ctx.fillStyle = gradient;
+          ctx.fill();
+        }
+
+        ctx.beginPath();
+        ctx.arc(px, py, r, 0, Math.PI * 2);
+        ctx.fillStyle = node.ring ? '#FF3B5C' : '#00E5A8';
+        ctx.fill();
+        ctx.strokeStyle = node.ring ? '#FF3B5C' : '#00E5A8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#0A0E1A';
+        ctx.font = 'bold 10px JetBrains Mono';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(node.label, px, py + 1);
+      });
+
+      time += 0.016;
+      requestAnimationFrame(draw);
+    }
+    draw();
+  </script>
+</body>
+</html>

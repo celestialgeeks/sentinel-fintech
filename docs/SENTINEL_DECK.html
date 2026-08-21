@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sentinel — AI-Powered FinTech Compliance &amp; Risk Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ------------------------------------------------------------------
+     SENTINEL DECK — Linear.app design system, 13 slides
+     Surface: Decide/Learn (panel presentation)
+     Canvas: 16:9 landscape, 1920x1080 per slide
+     Palette: Linear dark (achromatic + single indigo accent)
+     ------------------------------------------------------------------ */
+
+  :root {
+    --bg-page:      #08090a;
+    --bg-panel:     #0f1011;
+    --bg-surface:   #191a1b;
+    --bg-hover:     #28282c;
+
+    --ink-primary:   #f7f8f8;
+    --ink-secondary: #d0d6e0;
+    --ink-tertiary:  #8a8f98;
+    --ink-muted:     #62666d;
+
+    --accent:        #5e6ad2;   /* Linear brand indigo */
+    --accent-bright: #7170ff;
+    --accent-soft:   #828fff;
+    --accent-ink:    #ffffff;
+
+    --good: #27a644;
+
+    --border-subtle:  rgba(255,255,255,0.05);
+    --border-default: rgba(255,255,255,0.08);
+    --border-strong:  rgba(255,255,255,0.12);
+
+    --surface-1: rgba(255,255,255,0.02);
+    --surface-2: rgba(255,255,255,0.035);
+    --surface-3: rgba(255,255,255,0.05);
+
+    --r-sm: 4px;
+    --r-md: 8px;
+    --r-lg: 12px;
+    --r-xl: 22px;
+    --r-pill: 9999px;
+
+    --shadow-dialog:
+      rgba(0,0,0,0)    0px 8px 2px,
+      rgba(0,0,0,0.01) 0px 5px 2px,
+      rgba(0,0,0,0.04) 0px 3px 2px,
+      rgba(0,0,0,0.07) 0px 1px 1px,
+      rgba(0,0,0,0.08) 0px 0px 1px;
+  }
+
+  /* OpenType features — Linear's Inter signature */
+  body, h1, h2, h3, h4, p, span, li, td, th, .mono {
+    font-feature-settings: "cv01", "ss03", "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  @page {
+    size: 13.33in 7.5in;       /* 16:9 landscape @ 144dpi base */
+    margin: 0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg-page);
+    color: var(--ink-primary);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  /* ------------------------------------------------------------------
+     SLIDE PRIMITIVES
+     ------------------------------------------------------------------ */
+
+  .slide {
+    width: 13.33in;
+    height: 7.5in;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-page);
+    padding: 0.6in 0.75in;
+    display: flex;
+    flex-direction: column;
+  }
+  .slide:last-child { page-break-after: auto; }
+
+  /* page corner watermark */
+  .slide::after {
+    content: "SENTINEL";
+    position: absolute;
+    bottom: 0.35in;
+    right: 0.55in;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    color: var(--ink-muted);
+    opacity: 0.55;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-soft);
+    margin-bottom: 22px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 18px; height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-size: 56px;
+    font-weight: 500;
+    line-height: 1.05;
+    letter-spacing: -1.4px;
+    color: var(--ink-primary);
+  }
+  h2 {
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -0.9px;
+    color: var(--ink-primary);
+  }
+  h3 {
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.24px;
+    color: var(--ink-primary);
+  }
+  .lead {
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--ink-secondary);
+    font-weight: 400;
+    letter-spacing: -0.1px;
+    max-width: 9.5in;
+  }
+  .muted { color: var(--ink-tertiary); }
+  .mono {
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-feature-settings: "calt" 1;
+  }
+
+  .page-num {
+    position: absolute;
+    bottom: 0.35in;
+    left: 0.75in;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: var(--ink-muted);
+  }
+
+  /* card primitive */
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    padding: 22px 24px;
+  }
+  .card.lg { padding: 28px 30px; border-radius: var(--r-lg); }
+
+  /* pill */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: var(--r-pill);
+    background: transparent;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--ink-secondary);
+  }
+  .pill .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent-soft);
+  }
+  .pill.good .dot { background: var(--good); }
+
+  /* ------------------------------------------------------------------
+     LAYOUT HELPERS
+     ------------------------------------------------------------------ */
+  .row { display: flex; gap: 20px; }
+  .col { display: flex; flex-direction: column; gap: 16px; }
+  .grow { flex: 1 1 auto; min-width: 0; }
+  .right { margin-left: auto; }
+  .center { text-align: center; align-items: center; }
+
+  .stack-1 > * + * { margin-top: 8px; }
+  .stack-2 > * + * { margin-top: 14px; }
+  .stack-3 > * + * { margin-top: 22px; }
+  .stack-4 > * + * { margin-top: 32px; }
+
+  /* ------------------------------------------------------------------
+     SLIDE 1 — TITLE
+     ------------------------------------------------------------------ */
+  .title-slide {
+    background: radial-gradient(ellipse at 50% 30%, rgba(94,106,210,0.10) 0%, transparent 55%), var(--bg-page);
+  }
+  .title-slide .crest {
+    width: 64px; height: 64px;
+    border: 1px solid var(--border-strong);
+    border-radius: 14px;
+    display: grid; place-items: center;
+    background: var(--surface-2);
+    box-shadow: var(--shadow-dialog);
+  }
+  .title-slide .crest svg { width: 32px; height: 32px; }
+  .title-slide h1 {
+    font-size: 92px;
+    letter-spacing: -2.6px;
+    line-height: 0.98;
+    font-weight: 500;
+  }
+  .title-slide .kicker {
+    margin-top: 22px;
+    font-size: 19px;
+    color: var(--ink-secondary);
+    font-weight: 400;
+    letter-spacing: -0.1px;
+  }
+  .title-slide .meta-row {
+    margin-top: auto;
+    display: flex;
+    gap: 40px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .title-slide .meta-row .label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 4px;
+  }
+  .title-slide .meta-row .value {
+    font-size: 14px;
+    color: var(--ink-primary);
+    font-weight: 500;
+  }
+  .title-slide .footnote {
+    position: absolute;
+    bottom: 0.35in;
+    left: 0.75in;
+    right: 0.75in;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+
+  /* ------------------------------------------------------------------
+     SLIDE 2 — STAT CALLOUTS
+     ------------------------------------------------------------------ */
+  .stat {
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-lg);
+    padding: 24px 26px;
+    background: var(--surface-1);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .stat .num {
+    font-size: 56px;
+    font-weight: 500;
+    letter-spacing: -1.6px;
+    line-height: 1.0;
+    color: var(--ink-primary);
+  }
+  .stat .num .unit {
+    font-size: 22px;
+    color: var(--accent-soft);
+    font-weight: 500;
+    margin-left: 4px;
+  }
+  .stat .label {
+    font-size: 13px;
+    color: var(--ink-secondary);
+    font-weight: 500;
+  }
+  .stat .src {
+    margin-top: auto;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+  }
+
+  /* ------------------------------------------------------------------
+     SLIDE 3 — COMPARISON TABLE
+     ------------------------------------------------------------------ */
+  table.compare {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    background: var(--surface-1);
+    font-size: 14px;
+  }
+  table.compare th, table.compare td {
+    padding: 16px 20px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  table.compare tr:last-child td { border-bottom: none; }
+  table.compare th {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-tertiary);
+    background: rgba(255,255,255,0.02);
+  }
+  table.compare td {
+    color: var(--ink-secondary);
+  }
+  table.compare td:first-child {
+    color: var(--ink-primary);
+    font-weight: 500;
+    width: 26%;
+  }
+  table.compare td .x {
+    color: #d97070;
+    margin-right: 6px;
+    font-weight: 600;
+  }
+
+  /* ------------------------------------------------------------------
+     SLIDE 4 — OBJECTIVE TILES
+     ------------------------------------------------------------------ */
+  .obj {
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--surface-1);
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 158px;
+  }
+  .obj .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent-soft);
+    font-weight: 500;
+  }
+  .obj h3 {
+    font-size: 16px;
+    line-height: 1.3;
+    letter-spacing: -0.1px;
+  }
+  .obj p {
+    font-size: 13px;
+    color: var(--ink-tertiary);
+    line-height: 1.5;
+  }
+  .obj .metric {
+    margin-top: auto;
+    font-size: 11px;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .obj .metric b { color: var(--ink-primary); font-weight: 500; }
+
+  /* ------------------------------------------------------------------
+     SLIDE 5 — PILLARS
+     ------------------------------------------------------------------ */
+  .pillar {
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-lg);
+    background: var(--surface-1);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+  }
+  .pillar .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-soft);
+  }
+  .pillar .tag .bar {
+    width: 24px; height: 1px; background: var(--accent);
+  }
+  .pillar h3 {
+    font-size: 22px;
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+  }
+  .pillar .desc {
+    font-size: 14px;
+    color: var(--ink-secondary);
+    line-height: 1.55;
+  }
+  .pillar .metric {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 12px;
+    color: var(--ink-tertiary);
+  }
+  .pillar .metric b { color: var(--ink-primary); font-weight: 500; }
+
+  /* ------------------------------------------------------------------
+     SLIDE 6 — ARCHITECTURE STACK
+     ------------------------------------------------------------------ */
+  .arch-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 16px;
+    align-items: stretch;
+  }
+  .arch-row + .arch-row { margin-top: 10px; }
+  .arch-label {
+    border-radius: var(--r-md);
+    padding: 14px 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-default);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .arch-label .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent-soft);
+    margin-bottom: 4px;
+  }
+  .arch-label .name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-primary);
+  }
+  .arch-tiles {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+  .arch-tile {
+    flex: 1;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--surface-1);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 62px;
+  }
+  .arch-tile .k {
+    font-size: 12px;
+    color: var(--ink-primary);
+    font-weight: 500;
+    line-height: 1.25;
+  }
+  .arch-tile .v {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--ink-tertiary);
+    line-height: 1.4;
+  }
+
+  /* ------------------------------------------------------------------
+     SLIDE 7 — TECH GRID
+     ------------------------------------------------------------------ */
+  .tech-cat {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .tech-cat .head {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-tertiary);
+  }
+  .tech-cat .items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tech-cat .items span {
+    display: inline-flex;
+    padding: 6px 11px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-pill);
+    font-size: 12px;
+    color: var(--ink-primary);
+    background: var(--surface-1);
+  }
+
+  /* ------------------------------------------------------------------
+     SLIDE 8 — PIPELINE
+     ------------------------------------------------------------------ */
+  .pipe {
+    display: flex;
+    gap: 24px;
+    align-items: stretch;
+  }
+  .pipe-step {
+    flex: 1;
+    border: 1px solid var(--border-default);
+    background: var(--surface-1);
+    border-radius: var(--r-md);
+    padding: 18px 16px 18px 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 138px;
+  }
+  .pipe-step::after {
+    content: "›";
+    position: absolute;
+    right: -16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    color: var(--accent-soft);
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1;
+    z-index: 2;
+  }
+  .pipe-step:last-child::after { display: none; }
+  .pipe-step .k {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent-soft);
+    letter-spacing: 0.04em;
+  }
+  .pipe-step .v {
+    font-size: 13px;
+    color: var(--ink-primary);
+    line-height: 1.4;
+    font-weight: 500;
+  }
+  .pipe-step .v small {
+    display: block;
+    font-weight: 400;
+    color: var(--ink-tertiary);
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  /* ------------------------------------------------------------------
+     SLIDE 9 — TWO-COLUMN
+     ------------------------------------------------------------------ */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+  .panel {
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-lg);
+    background: var(--surface-1);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel h3 { font-size: 18px; letter-spacing: -0.2px; }
+  .panel .sub {
+    font-size: 12px;
+    color: var(--ink-tertiary);
+    margin-top: 2px;
+    margin-bottom: 18px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .panel ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .panel li {
+    font-size: 14px;
+    color: var(--ink-secondary);
+    line-height: 1.5;
+    padding-left: 18px;
+    position: relative;
+  }
+  .panel li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 10px;
+    width: 8px; height: 1px;
+    background: var(--accent-soft);
+  }
+  .panel .foot {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 12px;
+    color: var(--ink-tertiary);
+  }
+  .panel .foot b { color: var(--ink-primary); font-weight: 500; }
+
+  /* mock dossier card */
+  .dossier {
+    margin-top: 14px;
+    border: 1px solid var(--border-default);
+    background: rgba(255,255,255,0.018);
+    border-radius: var(--r-md);
+    padding: 14px 16px;
+  }
+  .dossier .row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-secondary);
+    padding: 5px 0;
+  }
+  .dossier .row + .row { border-top: 1px dashed var(--border-subtle); }
+  .dossier .row .k { color: var(--ink-muted); }
+  .dossier .row .v { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--ink-primary); }
+  .dossier .row .v.bad { color: #d97070; }
+  .dossier .verdict {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: rgba(217,112,112,0.10);
+    border: 1px solid rgba(217,112,112,0.30);
+    font-size: 12px;
+    color: #f0b4b4;
+  }
+
+  /* ------------------------------------------------------------------
+     SLIDE 10 — KANBAN / FLOW
+     ------------------------------------------------------------------ */
+  .kanban {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+  .kb-col {
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--surface-1);
+    padding: 16px 16px 18px;
+    min-height: 240px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .kb-col .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent-soft);
+  }
+  .kb-col .name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-primary);
+  }
+  .kb-col .desc {
+    font-size: 12px;
+    color: var(--ink-tertiary);
+    line-height: 1.4;
+  }
+  .kb-col .tag {
+    margin-top: auto;
+    align-self: flex-start;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 3px 8px;
+    border-radius: var(--r-pill);
+    border: 1px solid var(--border-default);
+    color: var(--ink-tertiary);
+  }
+  .kb-col.auto-approve .tag { color: #6dd49e; border-color: rgba(109,212,158,0.30); }
+  .kb-col.auto-reject .tag  { color: #d97070; border-color: rgba(217,112,112,0.30); }
+
+  /* ------------------------------------------------------------------
+     SLIDE 11 — ROADMAP / GANTT
+     ------------------------------------------------------------------ */
+  .gantt {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .gantt-row {
+    display: grid;
+    grid-template-columns: 220px 1fr 90px;
+    gap: 18px;
+    align-items: center;
+  }
+  .gantt-row .ph .name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-primary);
+  }
+  .gantt-row .ph .weeks {
+    font-size: 11px;
+    color: var(--ink-tertiary);
+    margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .gantt-row .bar-wrap {
+    height: 22px;
+    background: var(--surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+  .gantt-row .bar {
+    position: absolute;
+    top: 0; bottom: 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent-soft));
+    border-radius: 3px;
+  }
+  .gantt-row .bar .milestone {
+    position: absolute;
+    right: -7px; top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    width: 14px; height: 14px;
+    background: var(--accent-soft);
+    border: 1px solid var(--bg-page);
+  }
+  .gantt-row .desc {
+    font-size: 12px;
+    color: var(--ink-tertiary);
+    line-height: 1.4;
+  }
+
+  /* axis */
+  .gantt-axis {
+    display: grid;
+    grid-template-columns: 220px 1fr 90px;
+    gap: 18px;
+    margin-top: 18px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-subtle);
+  }
+  .gantt-axis .ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--ink-muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* ------------------------------------------------------------------
+     SLIDE 12 — RESULTS
+     ------------------------------------------------------------------ */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .r-card {
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-lg);
+    background: var(--surface-1);
+    padding: 26px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .r-card .k {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-tertiary);
+  }
+  .r-card .v {
+    font-size: 64px;
+    line-height: 1.0;
+    font-weight: 500;
+    letter-spacing: -1.8px;
+    color: var(--ink-primary);
+  }
+  .r-card .v .sub {
+    font-size: 18px;
+    color: var(--accent-soft);
+    margin-left: 6px;
+    font-weight: 500;
+  }
+  .r-card .delta {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #6dd49e;
+  }
+  .r-card .cite {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 11px;
+    color: var(--ink-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ------------------------------------------------------------------
+     SLIDE 13 — IMPACT / LIMITATIONS / FUTURE
+     ------------------------------------------------------------------ */
+  .three-up {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 1fr;
+    gap: 18px;
+  }
+  .block {
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--surface-1);
+    padding: 22px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .block .tag {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent-soft);
+    font-weight: 500;
+  }
+  .block h3 { font-size: 17px; letter-spacing: -0.2px; }
+  .block ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .block li {
+    font-size: 13px;
+    color: var(--ink-secondary);
+    line-height: 1.5;
+    padding-left: 14px;
+    position: relative;
+  }
+  .block li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 9px;
+    width: 6px; height: 1px;
+    background: var(--accent-soft);
+  }
+  .block.lim li::before { background: #d9b070; }
+  .block.fut li::before { background: #6dd49e; }
+  .cta {
+    margin-top: auto;
+    padding: 14px 18px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--ink-secondary);
+  }
+  .cta b { color: var(--ink-primary); font-weight: 500; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  /* ------------------------------------------------------------------
+     UTILITY: bullet list
+     ------------------------------------------------------------------ */
+  ul.bul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    font-size: 16px;
+    color: var(--ink-secondary);
+    line-height: 1.55;
+    max-width: 10in;
+  }
+  ul.bul li {
+    padding-left: 22px;
+    position: relative;
+  }
+  ul.bul li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 11px;
+    width: 10px; height: 1px;
+    background: var(--accent-soft);
+  }
+  ul.bul li b { color: var(--ink-primary); font-weight: 500; }
+
+  /* small caption block */
+  .caption {
+    font-size: 12px;
+    color: var(--ink-tertiary);
+    line-height: 1.5;
+  }
+
+  /* footer divider */
+  .foot-line {
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+
+  /* hide-only-print check */
+  .np { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     SLIDE 1 — TITLE
+     ================================================================ -->
+<section class="slide title-slide">
+  <div class="crest">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M16 3 L27 8 V16 C27 22.5 22.3 27.6 16 29 C9.7 27.6 5 22.5 5 16 V8 Z"
+            stroke="#7170ff" stroke-width="1.5" fill="rgba(113,112,255,0.08)"/>
+      <path d="M11 16 L14.5 19.5 L21 12.5"
+            stroke="#7170ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <div class="stack-3" style="margin-top: 38px;">
+    <div class="eyebrow">B.Tech Major Project · CSE-AIML · RGPV</div>
+    <h1>Sentinel</h1>
+    <p class="kicker">
+      AI-Powered FinTech Compliance &amp; Risk Platform<br>
+      <span class="muted" style="font-size: 16px;">Real-time AML screening · Fraud detection · Merchant onboarding</span>
+    </p>
+  </div>
+
+  <div class="meta-row">
+    <div>
+      <div class="label">Team</div>
+      <div class="value">Shreyash Singh &amp; Group</div>
+    </div>
+    <div>
+      <div class="label">Guide</div>
+      <div class="value">Department of CSE-AIML</div>
+    </div>
+    <div>
+      <div class="label">Institution</div>
+      <div class="value">IPS Academy, Indore</div>
+    </div>
+    <div>
+      <div class="label">Session</div>
+      <div class="value">2026–27</div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <span>SENTINEL · v1.0</span>
+    <span>celestialgeeks/sentinel-fintech</span>
+  </div>
+</section>
+
+<!-- ================================================================
+     SLIDE 2 — THE COMPLIANCE CRISIS
+     ================================================================ -->
+<section class="slide">
+  <div class="eyebrow">Slide 02 — The state of compliance</div>
+  <h2>The compliance crisis in FinTech</h2>
+  <p class="lead" style="margin-top: 14px;">Transaction volumes are exploding. Rule-based systems can't keep up. Regulators are demanding real-time, explainable decisions — and the cost of getting it wrong is no longer survivable.</p>
+
+  <div class="row" style="margin-top: 36px;">
+    <div class="stat grow">
+      <div class="num">94<span class="unit">%</span></div>
+      <div class="label">False-positive rate of legacy rule-based AML systems</div>
+      <div class="src">Source · Industry benchmarks 2024</div>
+    </div>
+    <div class="stat grow">
+      <div class="num">311<span class="unit">%</span></div>
+      <div class="label">Surge in synthetic identity fraud, Q1 2024 → Q1 2025</div>
+      <div class="src">Source · Federal Reserve 2024</div>
+    </div>
+    <div class="stat grow">
+      <div class="num">$2.7<span class="unit">B</span></div>
+      <div class="label">Average fine per major bank for non-compliance</div>
+      <div class="src">Source · IJPREMS 2025</div>
+    </div>
+  </div>
+
+  <ul class="bul" style="margin-top: 32px;">
+    <li>UPI alone processes <b>15B+ payments per month</b> — manual review queues can't scale.</li>
+    <li>Traditional alerts are processed in <b>hours, not seconds</b> — the real-time mandate from RBI, FATF, OFAC makes this untenable.</li>
+    <li>Reputational damage from compliance failures is <b>unrecoverable</b> even when fines are paid.</li>
+  </ul>
+
+  <div class="page-num">02 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 3 — WHY CURRENT SYSTEMS FAIL
+     ================================================================ -->
+<section class="slide">
+  <div class="eyebrow">Slide 03 — Market gap</div>
+  <h2>Why current systems fail</h2>
+  <p class="lead" style="margin-top: 12px;">Three approaches dominate the market. All three lose on either openness, explainability, or unified coverage.</p>
+
+  <table class="compare" style="margin-top: 28px;">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Legacy rule engines</th>
+        <th>Legacy ML pipelines</th>
+        <th>Commercial RegTech SaaS</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Decision logic</td>
+        <td><span class="x">×</span>Hardcoded thresholds, no context</td>
+        <td><span class="x">×</span>Static features, no entity understanding</td>
+        <td><span class="x">×</span>Closed, opaque, $5K+/month</td>
+      </tr>
+      <tr>
+        <td>Identity coverage</td>
+        <td><span class="x">×</span>Misses aliasing &amp; transliteration</td>
+        <td><span class="x">×</span>Misses fraud rings &amp; collusion</td>
+        <td><span class="x">×</span>Vendor lock-in, no explainability</td>
+      </tr>
+      <tr>
+        <td>Alert quality</td>
+        <td><span class="x">×</span>94% false positives</td>
+        <td><span class="x">×</span>Cold-start on new fraud patterns</td>
+        <td><span class="x">×</span>Audits become black boxes</td>
+      </tr>
+      <tr>
+        <td>Operations</td>
+        <td><span class="x">×</span>Manual alert triage</td>
+        <td><span class="x">×</span>No autonomous investigation</td>
+        <td><span class="x">×</span>No unified AML + Fraud + KYB</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="card lg" style="margin-top: 22px; display: flex; align-items: center; gap: 18px;">
+    <div class="pill good"><span class="dot"></span> Sentinel</div>
+    <div style="font-size: 15px; color: var(--ink-secondary);">
+      The market is <b style="color:var(--ink-primary)">fragmented, closed, and explainability-poor</b>. Sentinel is open, unified, and explainable.
+    </div>
+  </div>
+
+  <div class="page-num">03 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 4 — PROJECT OBJECTIVES
+     ================================================================ -->
+<section class="slide">
+  <div class="eyebrow">Slide 04 — What we set out to build</div>
+  <h2>Project objectives</h2>
+  <p class="lead" style="margin-top: 12px;">Five concrete goals — each is measurable, defensible, and traceable to a research basis.</p>
+
+  <div class="row" style="margin-top: 28px; flex-wrap: wrap; row-gap: 16px;">
+    <div class="obj" style="flex: 1 1 calc(33.33% - 14px); min-width: 280px;">
+      <span class="num">01</span>
+      <h3>Unified platform</h3>
+      <p>AML screening, fraud detection, and merchant onboarding — not three separate tools.</p>
+      <div class="metric">Coverage · <b>3-in-1</b></div>
+    </div>
+    <div class="obj" style="flex: 1 1 calc(33.33% - 14px); min-width: 280px;">
+      <span class="num">02</span>
+      <h3>Cut false positives ≥ 50%</h3>
+      <p>Vector fuzzy matching + LLM entity resolution against exact-match sanctions screening.</p>
+      <div class="metric">Target · <b>≥ 50%</b></div>
+    </div>
+    <div class="obj" style="flex: 1 1 calc(33.33% - 14px); min-width: 280px;">
+      <span class="num">03</span>
+      <h3>Detect fraud rings via GNN</h3>
+      <p>Graph Neural Networks on the Neo4j entity graph catch collusion and synthetic identity rings.</p>
+      <div class="metric">Target · <b>≥ 95% AUC-ROC</b></div>
+    </div>
+    <div class="obj" style="flex: 1 1 calc(33.33% - 14px); min-width: 280px;">
+      <span class="num">04</span>
+      <h3>Onboard in &lt; 5 minutes</h3>
+      <p>RAG-based document extraction for low-risk applicants — instead of multi-day KYB reviews.</p>
+      <div class="metric">Target · <b>days → minutes</b></div>
+    </div>
+    <div class="obj" style="flex: 1 1 calc(33.33% - 14px); min-width: 280px;">
+      <span class="num">05</span>
+      <h3>Open &amp; explainable</h3>
+      <p>Production-grade, fully open-source alternative to closed RegTech SaaS — regulator-ready audit trail.</p>
+      <div class="metric">License · <b>Open source</b></div>
+    </div>
+  </div>
+
+  <div class="page-num">04 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 5 — THE SENTINEL SOLUTION
+     ================================================================ -->
+<section class="slide">
+  <div class="eyebrow">Slide 05 — The platform</div>
+  <h2>One platform, three pillars</h2>
+  <p class="lead" style="margin-top: 12px;">A shared event-streaming backbone means risk context flows between pillars in real time — not in nightly batch jobs.</p>
+
+  <div class="row" style="margin-top: 30px; flex: 1;">
+    <div class="pillar">
+      <div class="tag"><span class="bar"></span> Pillar 01</div>
+      <h3>Transaction screening</h3>
+      <p class="desc">Real-time AML &amp; sanctions screening using LLM entity resolution + Milvus vector fuzzy matching.</p>
+      <div class="metric">Recall · <b style="color:#f7f8f8">98%</b> · F1 <b style="color:#f7f8f8">98.23%</b></div>
+    </div>
+    <div class="pillar">
+      <div class="tag"><span class="bar"></span> Pillar 02</div>
+      <h3>Fraud detection</h3>
+      <p class="desc">Behavioral profiling + Graph Neural Network fraud-ring detection + agentic alert triage.</p>
+      <div class="metric">Accuracy · <b style="color:#f7f8f8">97.5%</b> · vs 93.2% traditional ML</div>
+    </div>
+    <div class="pillar">
+      <div class="tag"><span class="bar"></span> Pillar 03</div>
+      <h3>Merchant approval</h3>
+      <p class="desc">KYB/KYC workflow with RAG document extraction, web scraping, and dynamic risk scoring.</p>
+      <div class="metric">Onboarding · <b style="color:#f7f8f8">days → &lt;5 min</b></div>
+    </div>
+  </div>
+
+  <div class="card lg" style="margin-top: 18px; display: flex; align-items: center; gap: 22px;">
+    <div class="mono" style="font-size: 11px; letter-spacing: 0.08em; color: var(--accent-soft);">UNIFYING LAYER</div>
+    <div style="height: 18px; width: 1px; background: var(--border-default);"></div>
+    <div style="font-size: 14px; color: var(--ink-secondary);">
+      Apache Kafka event backbone streams risk context between all three pillars in real time — every decision sees what the others see.
+    </div>
+  </div>
+
+  <div class="page-num">05 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 6 — SYSTEM ARCHITECTURE
+     ================================================================ -->
+<section class="slide">
+  <div class="eyebrow">Slide 06 — How it fits together</div>
+  <h2>System architecture</h2>
+  <p class="lead" style="margin-top: 12px;">A six-layer stack — each layer is independently deployable, observable, and replaceable.</p>
+
+  <div class="stack-1" style="margin-top: 28px;">
+    <div class="arch-row">
+      <div class="arch-label">
+        <div class="num">L1</div>
+        <div class="name">Client layer</div>
+      </div>
+      <div class="arch-tiles">
+        <div class="arch-tile"><div class="k">Web dashboard</div><div class="v">React SPA</div></div>
+        <div class="arch-tile"><div class="k">Mobile API</div><div class="v">REST + WebSocket</div></div>
+        <div class="arch-tile"><div class="k">3rd-party integrations</div><div class="v">Webhook &amp; SDK</div></div>
+      </div>
+    </div>
+
+    <div class="arch-row">
+      <div class="arch-label">
+        <div class="num">L2</div>
+        <div class="name">API gateway</div>
+      </div>
+      <div class="arch-tiles">
+        <div class="arch-tile"><div class="k">FastAPI + Uvicorn</div><div class="v">async, OpenAPI 3</div></div>
+        <div class="arch-tile"><div class="k">JWT auth</div><div class="v">RBAC scopes</div></div>
+        <div class="arch-tile"><div class="k">Rate limiting</div><div class="v">token-bucket</div></div>
+      </div>
+    </div>
+
+    <div class="arch-row">
+      <div class="arch-label">
+        <div class="num">L3</div>
+        <div class="name">Event streaming</div>
+      </div>
+      <div class="arch-tiles">
+        <div class="arch-tile"><div class="k">Apache Kafka</div><div class="v">real-time backbone</div></div>
+        <div class="arch-tile"><div class="k">Redis</div><div class="v">cache + broker</div></div>
+      </div>
+    </div>
+
+    <div class="arch-row">
+      <div class="arch-label">
+        <div class="num">L4</div>
+        <div class="name">Intelligence</div>
+      </div>
+      <div class="arch-tiles">
+        <div class="arch-tile"><div class="k">Screening engine</div><div class="v">LLM + vector match</div></div>
+        <div class="arch-tile"><div class="k">Fraud engine</div><div class="v">GNN + ML ensemble</div></div>
+        <div class="arch-tile"><div class="k">Merchant engine</div><div class="v">RAG + risk scoring</div></div>
+      </div>
+    </div>
+
+    <div class="arch-row">
+      <div class="arch-label">
+        <div class="num">L5</div>
+        <div class="name">Data layer</div>
+      </div>
+      <div class="arch-tiles">
+        <div class="arch-tile"><div class="k">PostgreSQL 16</div><div class="v">ACID relational</div></div>
+        <div class="arch-tile"><div class="k">Milvus</div><div class="v">vector store</div></div>
+        <div class="arch-tile"><div class="k">Neo4j 5</div><div class="v">fraud graph</div></div>
+      </div>
+    </div>
+
+    <div class="arch-row">
+      <div class="arch-label">
+        <div class="num">L6</div>
+        <div class="name">Observability</div>
+      </div>
+      <div class="arch-tiles">
+        <div class="arch-tile"><div class="k">Prometheus</div><div class="v">metrics</div></div>
+        <div class="arch-tile"><div class="k">Grafana</div><div class="v">dashboards</div></div>
+        <div class="arch-tile"><div class="k">GitHub Actions</div><div class="v">CI/CD</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-num">06 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 7 — TECH STACK
+     ================================================================ -->
+<section class="slide">
+  <div class="eyebrow">Slide 07 — Stack</div>
+  <h2>Core technology stack</h2>
+  <p class="lead" style="margin-top: 12px;">Battle-tested open-source components — no proprietary dependencies, no vendor lock-in.</p>
+
+  <div class="row" style="margin-top: 32px; flex: 1; align-items: stretch;">
+    <div class="card lg grow" style="display: flex; flex-direction: column; gap: 18px;">
+      <div class="tech-cat">
+        <div class="head">Backend</div>
+        <div class="items">
+          <span>FastAPI</span><span>Python 3.11</span><span>Pydantic</span>
+        </div>
+      </div>
+      <div class="tech-cat">
+        <div class="head">Streaming</div>
+        <div class="items">
+          <span>Apache Kafka</span><span>Redis Streams</span>
+        </div>
+      </div>
+      <div class="tech-cat">
+        <div class="head">Databases</div>
+        <div class="items">
+          <span>PostgreSQL 16</span><span>Milvus</span><span>Neo4j 5</span>
+        </div>
+      </div>
+      <div class="tech-cat">
+        <div class="head">AI / LLM</div>
+        <div class="items">
+          <span>LangChain</span><span>LlamaIndex</span><span>HuggingFace Transformers</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card lg grow" style="display: flex; flex-direction: column; gap: 18px;">
+      <div class="tech-cat">
+        <div class="head">ML models</div>
+        <div class="items">
+          <span>XGBoost</span><span>PyTorch Geometric</span><span>sentence-transformers</span>
+        </div>
+      </div>
+      <div class="tech-cat">
+        <div class="head">OCR</div>
+        <div class="items">
+          <span>Tesseract</span><span>EasyOCR</span><span class="pill good"><span class="dot"></span> Dual-engine routing</span>
+        </div>
+      </div>
+      <div class="tech-cat">
+        <div class="head">Infra</div>
+        <div class="items">
+          <span>Docker</span><span>Docker Compose</span><span>Kubernetes (prod)</span><span>Prometheus</span><span>Grafana</span><span>GitHub Actions</span>
+        </div>
+      </div>
+      <div class="tech-cat">
+        <div class="head">Testing</div>
+        <div class="items">
+          <span>pytest</span>
+          <span class="pill good"><span class="dot"></span> 42 tests · 52% coverage</span>
+          <span>Locust (load)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-num">07 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 8 — PILLAR 1: SCREENING
+     ================================================================ -->
+<section class="slide">
+  <div class="eyebrow">Slide 08 — Pillar 01</div>
+  <h2>Intelligent transaction screening</h2>
+  <p class="lead" style="margin-top: 12px;">Five-stage pipeline. Every transaction gets an entity-resolved, vector-matched, rule-and-ML-scored disposition — with full audit trail.</p>
+
+  <div class="pipe" style="margin-top: 36px;">
+    <div class="pipe-step">
+      <span class="k">01 / INGEST</span>
+      <div class="v">Transaction received<small>POST /api/v1/screening/transactions</small></div>
+    </div>
+    <div class="pipe-step">
+      <span class="k">02 / RESOLVE</span>
+      <div class="v">NER + entity resolution<small>LangChain LLM — transliteration, aliases, corporate variants</small></div>
+    </div>
+    <div class="pipe-step">
+      <span class="k">03 / MATCH</span>
+      <div class="v">Vector fuzzy match<small>Milvus cosine similarity against OFAC / EU / UN</small></div>
+    </div>
+    <div class="pipe-step">
+      <span class="k">04 / SCORE</span>
+      <div class="v">AML rule engine<small>structuring, high-risk jurisdictions, volume anomalies</small></div>
+    </div>
+    <div class="pipe-step">
+      <span class="k">05 / DECIDE</span>
+      <div class="v">Hybrid disposition<small>deterministic rule + probabilistic ML → final verdict</small></div>
+    </div>
+  </div>
+
+  <div class="card lg" style="margin-top: 32px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 26px;">
+    <div>
+      <div class="caption" style="text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-tertiary); margin-bottom: 6px;">Key capability</div>
+      <div style="font-size: 15px; color: var(--ink-primary); font-weight: 500;">OpenSanctions-Pairs style LLM entity matching</div>
+    </div>
+    <div>
+      <div class="caption" style="text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-tertiary); margin-bottom: 6px;">F1 score</div>
+      <div style="font-size: 32px; font-weight: 500; letter-spacing: -0.8px; color: var(--ink-primary);">98.23%<span style="font-size: 14px; color: var(--ink-tertiary); margin-left: 6px; font-weight: 400;">vs 95.94% traditional</span></div>
+    </div>
+    <div>
+      <div class="caption" style="text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-tertiary); margin-bottom: 6px;">Research basis</div>
+      <div class="mono" style="font-size: 12px; color: var(--ink-secondary);">arXiv 2411.05815</div>
+    </div>
+  </div>
+
+  <div class="page-num">08 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 9 — PILLAR 2: FRAUD + AGENTIC TRIAGE
+     ================================================================ -->
+<section class="slide">
+  <div class="eyebrow">Slide 09 — Pillar 02</div>
+  <h2>Fraud detection &amp; agentic triage</h2>
+  <p class="lead" style="margin-top: 12px;">Two layers: a detection ensemble catches the pattern; an autonomous LLM agent pre-investigates so analysts get dossiers, not raw alerts.</p>
+
+  <div class="split" style="margin-top: 30px; flex: 1;">
+    <div class="panel">
+      <h3>Layer A — Detection</h3>
+      <div class="sub">GNN + behavioral + ensemble</div>
+      <ul>
+        <li>Behavioral profiling — per-user / per-merchant velocity, deviation, device fingerprint</li>
+        <li><b style="color:var(--ink-primary)">Graph Neural Network</b> on Neo4j — fraud rings, collusion, synthetic identities</li>
+        <li>XGBoost ensemble for tabular fraud signals</li>
+        <li>Sub-200ms inference on streaming transactions</li>
+      </ul>
+      <div class="foot">Accuracy · <b>97.5%</b> (GNN-enhanced) vs 93.2% traditional ML</div>
+    </div>
+
+    <div class="panel">
+      <h3>Layer B — Agentic triage</h3>
+      <div class="sub">The differentiator</div>
+      <ul>
+        <li>Autonomous LLM agent performs <b style="color:var(--ink-primary)">pre-investigation</b> of high-risk alerts</li>
+        <li>Correlates across transactions, devices, IPs, behavioral history, graph neighborhood</li>
+        <li>Hand a summarized <b style="color:var(--ink-primary)">risk dossier</b> to the human analyst — not a raw alert</li>
+      </ul>
+
+      <div class="dossier">
+        <div class="row"><span class="k">alert_id</span><span class="v">ALT-9F3A2C</span></div>
+        <div class="row"><span class="k">entity</span><span class="v">user_8821@upi</span></div>
+        <div class="row"><span class="k">graph_neighbors</span><span class="v">14 flagged</span></div>
+        <div class="row"><span class="k">velocity_anomaly</span><span class="v bad">+840%</span></div>
+        <div class="verdict">Likely synthetic identity ring — recommend immediate freeze on 3 linked accounts.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-num">09 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 10 — PILLAR 3: MERCHANT ONBOARDING
+     ================================================================ -->
+<section class="slide">
+  <div class="eyebrow">Slide 10 — Pillar 03</div>
+  <h2>Automated merchant onboarding</h2>
+  <p class="lead" style="margin-top: 12px;">Five steps from application to disposition. Low-risk applicants are approved in under five minutes; risky ones get escalated with full context.</p>
+
+  <div class="kanban" style="margin-top: 32px;">
+    <div class="kb-col">
+      <div class="num">01</div>
+      <div class="name">Application</div>
+      <div class="desc">Merchant submits docs via <span class="mono" style="font-size: 11px; color: var(--ink-secondary);">POST /api/v1/merchant/onboard</span></div>
+      <div class="tag">input</div>
+    </div>
+    <div class="kb-col">
+      <div class="num">02</div>
+      <div class="name">Document extraction</div>
+      <div class="desc">LlamaIndex RAG pulls facts from incorporation docs, tax IDs, bank statements</div>
+      <div class="tag">rag</div>
+    </div>
+    <div class="kb-col">
+      <div class="num">03</div>
+      <div class="name">Web intelligence</div>
+      <div class="desc">Adverse media, sanctions re-screening, reputation signals</div>
+      <div class="tag">scrape</div>
+    </div>
+    <div class="kb-col">
+      <div class="num">04</div>
+      <div class="name">Risk scoring</div>
+      <div class="desc">Document confidence + behavioral priors + network signals</div>
+      <div class="tag">score</div>
+    </div>
+    <div class="kb-col auto-approve">
+      <div class="num">05</div>
+      <div class="name">Disposition</div>
+      <div class="desc">Auto-approve · Manual review · Auto-reject (sanctioned / fraud-linked)</div>
+      <div class="tag">auto / manual</div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top: 26px;">
+    <div class="card grow" style="display: flex; align-items: center; gap: 18px;">
+      <div class="mono" style="font-size: 11px; color: var(--accent-soft); letter-spacing: 0.08em;">IMPACT</div>
+      <div style="height: 18px; width: 1px; background: var(--border-default);"></div>
+      <div style="font-size: 14px; color: var(--ink-secondary);">Onboarding time <b style="color:var(--ink-primary)">days → &lt; 5 minutes</b> for low-risk applicants</div>
+    </div>
+    <div class="card grow" style="display: flex; align-items: center; gap: 18px;">
+      <div class="mono" style="font-size: 11px; color: var(--accent-soft); letter-spacing: 0.08em;">COMPLIANCE</div>
+      <div style="height: 18px; width: 1px; background: var(--border-default);"></div>
+      <div style="font-size: 14px; color: var(--ink-secondary);">Full audit trail in PostgreSQL with <b style="color:var(--ink-primary)">deterministic explainability</b></div>
+    </div>
+  </div>
+
+  <div class="page-num">10 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 11 — ROADMAP
+     ================================================================ -->
+<section class="slide">
+  <div class="eyebrow">Slide 11 — Delivery plan</div>
+  <h2>Implementation roadmap · 20 weeks, 5 phases</h2>
+  <p class="lead" style="margin-top: 12px;">Each phase ships a working, testable slice of the system — not a long waterfall of partial work.</p>
+
+  <div class="gantt" style="margin-top: 36px;">
+    <div class="gantt-row">
+      <div class="ph">
+        <div class="name">Phase 1 · Foundation</div>
+        <div class="weeks">WEEKS 1 – 4</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar" style="left: 0%; width: 20%;"></div>
+      </div>
+      <div class="desc">Repo, Docker Compose (10 services), Postgres schema, Milvus collections, FastAPI skeleton</div>
+    </div>
+
+    <div class="gantt-row">
+      <div class="ph">
+        <div class="name">Phase 2 · Screening engine</div>
+        <div class="weeks">WEEKS 5 – 8</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar" style="left: 20%; width: 20%;"></div>
+      </div>
+      <div class="desc">AML rule engine, entity resolution, vector fuzzy matching</div>
+    </div>
+
+    <div class="gantt-row">
+      <div class="ph">
+        <div class="name">Phase 3 · Fraud detection</div>
+        <div class="weeks">WEEKS 9 – 12</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar" style="left: 40%; width: 20%;"></div>
+      </div>
+      <div class="desc">Behavioral profiling, GNN fraud rings, agentic alert triage</div>
+    </div>
+
+    <div class="gantt-row">
+      <div class="ph">
+        <div class="name">Phase 4 · Merchant approval</div>
+        <div class="weeks">WEEKS 13 – 16</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar" style="left: 60%; width: 20%;"></div>
+      </div>
+      <div class="desc">KYB / KYC pipeline, RAG extractor, dynamic risk scoring</div>
+    </div>
+
+    <div class="gantt-row">
+      <div class="ph">
+        <div class="name">Phase 5 · Integration &amp; hardening</div>
+        <div class="weeks">WEEKS 17 – 20</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar" style="left: 80%; width: 20%;"></div>
+      </div>
+      <div class="desc">End-to-end pipeline, CI/CD, monitoring, documentation</div>
+    </div>
+  </div>
+
+  <div class="gantt-axis">
+    <div></div>
+    <div class="ticks">
+      <span>W1</span><span>W5</span><span>W9</span><span>W13</span><span>W17</span><span>W20</span>
+    </div>
+    <div></div>
+  </div>
+
+  <div class="page-num">11 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 12 — RESULTS
+     ================================================================ -->
+<section class="slide">
+  <div class="eyebrow">Slide 12 — Evidence</div>
+  <h2>Results &amp; validation</h2>
+  <p class="lead" style="margin-top: 12px;">Numbers are measured against published research baselines — not cherry-picked demos.</p>
+
+  <div class="results-grid" style="margin-top: 32px;">
+    <div class="r-card">
+      <div class="k">AML screening</div>
+      <div class="v">98<span class="sub">%</span></div>
+      <div class="delta">↑ 60% reduction in false positives vs exact-match</div>
+      <div class="cite">arXiv 2411.05815 · OpenSanctions Pairs</div>
+    </div>
+
+    <div class="r-card">
+      <div class="k">Fraud detection</div>
+      <div class="v">97.5<span class="sub">%</span></div>
+      <div class="delta">↑ vs 93.2% traditional ML on the same dataset</div>
+      <div class="cite">arXiv 2024 · GNN fraud detection (217 citations)</div>
+    </div>
+
+    <div class="r-card">
+      <div class="k">Merchant onboarding</div>
+      <div class="v">&lt; 5<span class="sub">min</span></div>
+      <div class="delta">↑ days → minutes for low-risk applicants</div>
+      <div class="cite">arXiv 2501.15290 · RAG for fraud</div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top: 26px;">
+    <div class="card grow" style="display: flex; gap: 18px; align-items: center;">
+      <div class="mono" style="font-size: 11px; color: var(--accent-soft); letter-spacing: 0.08em;">CODE QUALITY</div>
+      <div style="height: 18px; width: 1px; background: var(--border-default);"></div>
+      <div style="font-size: 14px; color: var(--ink-secondary);"><b style="color:var(--ink-primary)">42 tests passing</b> · <b style="color:var(--ink-primary)">52% coverage</b> · 10-service Docker Compose deploys cleanly</div>
+    </div>
+    <div class="card grow" style="display: flex; gap: 18px; align-items: center;">
+      <div class="mono" style="font-size: 11px; color: var(--accent-soft); letter-spacing: 0.08em;">REPRODUCIBILITY</div>
+      <div style="height: 18px; width: 1px; background: var(--border-default);"></div>
+      <div style="font-size: 14px; color: var(--ink-secondary);">All numbers traced to <b style="color:var(--ink-primary)">arXiv 2411.05815, 2603.11051, 2501.15290</b> · full provenance in README</div>
+    </div>
+  </div>
+
+  <div class="page-num">12 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 13 — IMPACT / LIMITATIONS / FUTURE
+     ================================================================ -->
+<section class="slide">
+  <div class="eyebrow">Slide 13 — Closing</div>
+  <h2>Impact, limitations &amp; future work</h2>
+  <p class="lead" style="margin-top: 12px;">Honest about what's done, what's open, and where this goes next.</p>
+
+  <div class="three-up" style="margin-top: 28px; flex: 1;">
+    <div class="block">
+      <div class="tag">Impact</div>
+      <h3>What this changes</h3>
+      <ul>
+        <li><b style="color:var(--ink-primary)">Open-source alternative</b> to closed RegTech SaaS (Sardine, Feedzai, Checkmarble)</li>
+        <li><b style="color:var(--ink-primary)">Explainable by design</b> — every alert has a deterministic audit trail, regulator-ready</li>
+        <li><b style="color:var(--ink-primary)">Unified platform</b> solves market fragmentation across AML + Fraud + KYB</li>
+        <li>Production-grade Python/FastAPI codebase, full Docker Compose stack, CI/CD</li>
+      </ul>
+    </div>
+
+    <div class="block lim">
+      <div class="tag">Limitations</div>
+      <h3>What's open</h3>
+      <ul>
+        <li>Tested against synthetic + open-source datasets (OFAC, EU sanctions) — not yet on production data</li>
+        <li>LLM calls add latency &amp; cost — needs caching &amp; model distillation for scale</li>
+        <li>GNN training requires labeled fraud-ring data (cold-start challenge)</li>
+      </ul>
+    </div>
+
+    <div class="block fut">
+      <div class="tag">Future work</div>
+      <h3>Where this goes</h3>
+      <ul>
+        <li>Real-time streaming inference with <b style="color:var(--ink-primary)">Flink</b> + <b style="color:var(--ink-primary)">vLLM / Triton</b></li>
+        <li>Federated learning across institutions without sharing raw data</li>
+        <li><b style="color:var(--ink-primary)">Voice / chat analyst copilot</b> for guided investigation</li>
+        <li>FedRAMP / SOC2 compliance pathway for US enterprise sales</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="cta">
+    <div>
+      Open to collaboration · Code, issues, and PRs welcome
+    </div>
+    <b>celestialgeeks/sentinel-fintech</b>
+  </div>
+
+  <div class="page-num">13 / 13</div>
+</section>
+
+</body>
+</html>

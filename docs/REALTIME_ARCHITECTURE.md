@@ -85,12 +85,17 @@ Payment arrives
 - **schemas.py** — VerificationQuestion, VerificationAnswer, VerificationContext, VerificationDecision
 - **router.py** — FastAPI endpoints for verification runs
 
-### 3. Shared Infrastructure (existing)
-- **Kafka** — Event stream backbone (sentinel.payment, sentinel.trail, sentinel.decision)
-- **Neo4j** — Graph database for money trail traversal
-- **PostgreSQL** — Entity storage, screening results, alerts
-- **Redis** — Cache, rate limiting, session state
-- **Milvus** — Vector embeddings for entity resolution
+### 3. Decision (`src/decision/`)
+- **engine.py** — DecisionEngine: aggregate risk, enforce policy, collect evidence
+- **router.py** — FastAPI endpoints for decision runs
+- **Policy** — Configurable thresholds: BLOCK (0.8), REVIEW (0.5)
+
+### 4. Kafka Pipeline (`src/kafka/`)
+- **consumer.py** — Orchestrates: payment → trail → screen → verify → decision
+- Publishes to `sentinel.payment`, `sentinel.trail`, `sentinel.decision`
+
+### 5. Cache (`src/cache/`)
+- **trail_cache.py** — Redis TTL cache for trail analysis (5 min)
 
 ## Technology Choices
 
@@ -100,9 +105,9 @@ Payment arrives
 | Events | Apache Kafka | Event-driven, decoupled, replayable |
 | Graph | Neo4j | Money trail = natural graph problem |
 | Vector | Milvus | Entity resolution, fuzzy matching |
-| Cache | Redis | Fast lookups, rate limiting |
+| Cache | Redis | Fast lookups, rate limiting, TTL cache |
 | DB | PostgreSQL | ACID transactions, JSONB for flexibility |
-| LLM | OpenRouter / Anthropic | Multi-model, fallback-ready |
+| LLM | OmniRoute (openrouter) | Multi-model, free tier, fallback-ready |
 
 ## API Endpoints
 
@@ -116,6 +121,9 @@ POST /api/v1/verification/run          — Run full verification
 POST /api/v1/verification/question/{id} — Ask specific question
 GET  /api/v1/verification/status/{id}   — Verification status
 GET  /api/v1/verification/decision/{id} — Final decision
+
+POST /api/v1/decision/run              — Run decision engine
+GET  /api/v1/decision/health           — Decision health check
 ```
 
 ## Phase Plan

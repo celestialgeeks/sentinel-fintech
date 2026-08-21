@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sentinel — AI-Powered FinTech Compliance &amp; Risk Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600&family=Source+Code+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ------------------------------------------------------------------
+   SENTINEL DECK v2 — Stripe design system
+   White canvas · Deep navy headings · Signature purple accent
+   Surface: Decide/Learn (panel presentation, fintech-grade)
+   ------------------------------------------------------------------ */
+  :root {
+    --stripe-purple:    #533afd;
+    --stripe-purple-dk: #4434d4;
+    --stripe-purple-lt: #b9b9f9;
+    --stripe-purple-soft: #d6d9fc;
+    --stripe-brand-dark: #1c1e54;
+    --stripe-dark-navy: #0d253d;
+    --stripe-ruby:      #ea2261;
+    --stripe-magenta:   #f96bee;
+
+    --heading:  #061b31;
+    --label:    #273951;
+    --body:     #64748d;
+    --success:  #15be53;
+    --success-bg: rgba(21,190,83,0.12);
+    --success-text: #108c3d;
+
+    --bg:         #ffffff;
+    --surface:    #f8f9fb;
+    --border:     #e5edf5;
+    --border-soft:#f0f4f9;
+    --muted:      #9ba4b5;
+
+    --shadow-soft: rgba(23,23,23,0.06) 0px 3px 6px;
+    --shadow-card: rgba(50,50,93,0.25) 0px 30px 45px -30px, rgba(0,0,0,0.1) 0px 18px 36px -18px;
+    --shadow-float: rgba(0,0,0,0.25) 0px 10px 30px;
+
+    --r-sm: 4px;
+    --r-md: 6px;
+    --r-lg: 8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @page {
+    size: 13.33in 7.5in;
+    margin: 0;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+    font-weight: 300;
+    line-height: 1.5;
+    color: var(--body);
+    font-feature-settings: "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ------------------------------------------------------------------
+     SLIDE PRIMITIVES
+     ------------------------------------------------------------------ */
+  .slide {
+    width: 13.33in;
+    height: 7.5in;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+    padding: 0.55in 0.7in;
+    display: flex;
+    flex-direction: column;
+  }
+  .slide:last-child { page-break-after: auto; }
+
+  .page-num {
+    position: absolute;
+    bottom: 0.28in;
+    right: 0.65in;
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+  .brand {
+    position: absolute;
+    top: 0.3in;
+    left: 0.7in;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--stripe-purple);
+  }
+
+  /* eyebrow / label */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--stripe-purple);
+    margin-bottom: 16px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 20px; height: 2px;
+    background: var(--stripe-purple);
+  }
+
+  /* headings */
+  h1 {
+    font-size: 52px;
+    font-weight: 300;
+    line-height: 1.04;
+    letter-spacing: -1.3px;
+    color: var(--heading);
+  }
+  h2 {
+    font-size: 34px;
+    font-weight: 300;
+    line-height: 1.1;
+    letter-spacing: -0.8px;
+    color: var(--heading);
+  }
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.1px;
+    color: var(--heading);
+  }
+  .lead {
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--body);
+    font-weight: 300;
+    max-width: 9.5in;
+  }
+  .mono {
+    font-family: 'Source Code Pro', ui-monospace, Menlo, monospace;
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--label);
+    letter-spacing: 0;
+  }
+
+  /* card primitive */
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-card);
+  }
+  .card .inner { padding: 0; }
+
+  /* button primitive (not interactive in PDF) */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--stripe-purple);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 400;
+    padding: 10px 22px;
+    border-radius: var(--r-sm);
+    text-decoration: none;
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--stripe-purple);
+    border: 1px solid var(--stripe-purple-soft);
+  }
+
+  /* stat callout */
+  .stat-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 22px 26px;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .stat-card .num {
+    font-size: 52px;
+    font-weight: 300;
+    line-height: 1.0;
+    letter-spacing: -1.4px;
+    color: var(--heading);
+  }
+  .stat-card .num .unit {
+    font-size: 20px;
+    color: var(--stripe-purple);
+    font-weight: 500;
+    margin-left: 3px;
+  }
+  .stat-card .desc {
+    font-size: 13px;
+    color: var(--body);
+    line-height: 1.4;
+  }
+  .stat-card .src {
+    margin-top: auto;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* layout helpers */
+  .row { display: flex; gap: 16px; }
+  .col { display: flex; flex-direction: column; gap: 14px; }
+  .grow { flex: 1 1 auto; min-width: 0; }
+  .stack-1 > * + * { margin-top: 10px; }
+  .stack-2 > * + * { margin-top: 18px; }
+  .stack-3 > * + * { margin-top: 26px; }
+  .right { margin-left: auto; }
+
+  /* pill badge */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: var(--r-sm);
+    font-size: 11px;
+    font-weight: 400;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--label);
+  }
+  .pill.purple { background: rgba(83,58,253,0.08); border-color: var(--stripe-purple-soft); color: var(--stripe-purple); }
+  .pill.green  { background: var(--success-bg); border-color: rgba(21,190,83,0.3); color: var(--success-text); }
+
+  /* dot */
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--stripe-purple); }
+  .dot.green { background: var(--success); }
+  .dot.ruby  { background: var(--stripe-ruby); }
+
+  /* divider */
+  .div {
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ==========================================================================
+     SLIDE 1 — TITLE
+     ========================================================================== */
+  .title-slide {
+    background: linear-gradient(160deg, #f8f9fb 0%, #ffffff 40%);
+    position: relative;
+  }
+  .title-slide::before {
+    content: "";
+    position: absolute;
+    top: -200px; right: -100px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(83,58,253,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .title-slide .logo-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+  .title-slide .logo-mark .shield {
+    width: 44px; height: 44px;
+    background: var(--stripe-purple);
+    border-radius: var(--r-md);
+    display: grid; place-items: center;
+    box-shadow: 0 4px 14px rgba(83,58,253,0.35);
+  }
+  .title-slide .logo-mark .shield svg { width: 22px; height: 22px; }
+  .title-slide .logo-mark .word { font-size: 13px; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--heading); }
+  .title-slide h1 {
+    font-size: 68px;
+    letter-spacing: -1.8px;
+    line-height: 1.0;
+    margin-bottom: 20px;
+    max-width: 8.5in;
+  }
+  .title-slide .tagline {
+    font-size: 19px;
+    font-weight: 300;
+    color: var(--body);
+    line-height: 1.5;
+    max-width: 7in;
+    margin-bottom: 44px;
+  }
+  .title-slide .meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 28px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+  }
+  .title-slide .meta .k { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 5px; }
+  .title-slide .meta .v { font-size: 14px; font-weight: 400; color: var(--heading); }
+
+  /* ==========================================================================
+     SLIDE 2 — CRISIS
+     ========================================================================== */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 28px;
+  }
+  .bul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .bul li {
+    font-size: 15px;
+    color: var(--body);
+    padding-left: 18px;
+    position: relative;
+    line-height: 1.5;
+  }
+  .bul li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 9px;
+    width: 8px; height: 1px;
+    background: var(--stripe-purple);
+  }
+  .bul li b { color: var(--heading); font-weight: 500; }
+
+  /* ==========================================================================
+     SLIDE 3 — COMPARISON TABLE
+     ========================================================================== */
+  table.compare {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    font-size: 14px;
+    background: var(--bg);
+  }
+  table.compare th {
+    background: var(--surface);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--label);
+    padding: 14px 18px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  table.compare td {
+    padding: 13px 18px;
+    color: var(--body);
+    border-bottom: 1px solid var(--border-soft);
+    vertical-align: top;
+  }
+  table.compare tr:last-child td { border-bottom: none; }
+  table.compare td:first-child {
+    color: var(--heading);
+    font-weight: 500;
+    width: 200px;
+  }
+  table.compare td .x { color: var(--stripe-ruby); margin-right: 5px; font-weight: 600; }
+  .highlight-row {
+    margin-top: 18px;
+    background: linear-gradient(90deg, rgba(83,58,253,0.06) 0%, rgba(83,58,253,0.02) 100%);
+    border: 1px solid var(--stripe-purple-soft);
+    border-radius: var(--r-md);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 15px;
+    color: var(--label);
+  }
+  .highlight-row b { color: var(--heading); font-weight: 500; }
+
+  /* ==========================================================================
+     SLIDE 4 — OBJECTIVES
+     ========================================================================== */
+  .obj {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 150px;
+  }
+  .obj .num {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--stripe-purple);
+    letter-spacing: 0.04em;
+  }
+  .obj h3 { font-size: 15px; letter-spacing: -0.1px; }
+  .obj p { font-size: 13px; color: var(--body); line-height: 1.5; }
+  .obj .metric {
+    margin-top: auto;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .obj .metric b { color: var(--heading); font-weight: 500; }
+
+  /* ==========================================================================
+     SLIDE 5 — PILLARS
+     ========================================================================== */
+  .pillar {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 24px 26px;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+  }
+  .pillar .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--stripe-purple);
+  }
+  .pillar .tag .bar { width: 20px; height: 2px; background: var(--stripe-purple); }
+  .pillar h3 { font-size: 20px; letter-spacing: -0.25px; }
+  .pillar .desc { font-size: 14px; color: var(--body); line-height: 1.55; }
+  .pillar .metric {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .pillar .metric b { color: var(--heading); font-weight: 500; }
+
+  /* ==========================================================================
+     SLIDE 6 — ARCHITECTURE
+     ========================================================================== */
+  .arch-row {
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    gap: 14px;
+    align-items: stretch;
+  }
+  .arch-row + .arch-row { margin-top: 8px; }
+  .arch-label {
+    border-radius: var(--r-md);
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .arch-label .num { font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--stripe-purple); margin-bottom: 3px; }
+  .arch-label .name { font-size: 13px; font-weight: 500; color: var(--heading); }
+  .arch-tiles { display: flex; gap: 10px; align-items: stretch; }
+  .arch-tile {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--bg);
+    padding: 12px 14px;
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .arch-tile .k { font-size: 13px; font-weight: 500; color: var(--heading); line-height: 1.25; }
+  .arch-tile .v { margin-top: 3px; font-size: 11px; color: var(--body); line-height: 1.4; }
+
+  /* ==========================================================================
+     SLIDE 7 — TECH GRID
+     ========================================================================== */
+  .tech-cat { display: flex; flex-direction: column; gap: 8px; }
+  .tech-cat .head { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .tech-cat .items { display: flex; flex-wrap: wrap; gap: 7px; }
+  .tech-cat .items span {
+    display: inline-flex;
+    padding: 5px 11px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    font-size: 13px;
+    color: var(--label);
+    background: var(--surface);
+    font-weight: 400;
+  }
+
+  /* ==========================================================================
+     SLIDE 8 — PIPELINE
+     ========================================================================== */
+  .pipe { display: flex; gap: 14px; align-items: stretch; }
+  .pipe-step {
+    flex: 1;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: var(--r-md);
+    padding: 16px 16px 16px 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 130px;
+    box-shadow: var(--shadow-soft);
+  }
+  .pipe-step::after {
+    content: "›";
+    position: absolute;
+    right: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--stripe-purple);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1;
+    z-index: 2;
+  }
+  .pipe-step:last-child::after { display: none; }
+  .pipe-step .k {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 11px;
+    color: var(--stripe-purple);
+    letter-spacing: 0.04em;
+    font-weight: 500;
+  }
+  .pipe-step .v {
+    font-size: 13px;
+    color: var(--heading);
+    line-height: 1.35;
+    font-weight: 500;
+  }
+  .pipe-step .v small {
+    display: block;
+    font-weight: 300;
+    color: var(--body);
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  /* ==========================================================================
+     SLIDE 9 — TWO-COLUMN
+     ========================================================================== */
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .panel {
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--bg);
+    padding: 24px 26px;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+  }
+  .panel h3 { font-size: 17px; letter-spacing: -0.2px; }
+  .panel .sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    margin-bottom: 16px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .panel ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+  .panel li {
+    font-size: 14px;
+    color: var(--body);
+    line-height: 1.5;
+    padding-left: 16px;
+    position: relative;
+  }
+  .panel li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 9px;
+    width: 7px; height: 1px;
+    background: var(--stripe-purple);
+  }
+  .panel .foot {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--body);
+  }
+  .panel .foot b { color: var(--heading); font-weight: 500; }
+
+  /* dossier mock */
+  .dossier {
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--r-md);
+    padding: 12px 14px;
+    box-shadow: var(--shadow-soft);
+  }
+  .dossier .row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--label);
+    padding: 4px 0;
+  }
+  .dossier .row + .row { border-top: 1px dashed var(--border); }
+  .dossier .row .k { color: var(--muted); }
+  .dossier .row .v { font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--heading); font-weight: 500; }
+  .dossier .row .v.bad { color: var(--stripe-ruby); }
+  .dossier .verdict {
+    margin-top: 8px;
+    padding: 9px 11px;
+    border-radius: var(--r-sm);
+    background: rgba(234,34,97,0.08);
+    border: 1px solid rgba(234,34,97,0.2);
+    font-size: 12px;
+    color: #c41d52;
+  }
+
+  /* ==========================================================================
+     SLIDE 10 — KANBAN / FLOW
+     ========================================================================== */
+  .kanban { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .kb-col {
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--bg);
+    padding: 14px 14px 16px;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    box-shadow: var(--shadow-soft);
+  }
+  .kb-col .num { font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--stripe-purple); }
+  .kb-col .name { font-size: 13px; font-weight: 500; color: var(--heading); }
+  .kb-col .desc { font-size: 12px; color: var(--body); line-height: 1.4; }
+  .kb-col .tag {
+    margin-top: auto;
+    align-self: flex-start;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--surface);
+  }
+  .kb-col.auto-approve .tag { color: var(--success-text); border-color: rgba(21,190,83,0.3); background: var(--success-bg); }
+  .kb-col.auto-reject .tag  { color: #c41d52; border-color: rgba(234,34,97,0.25); background: rgba(234,34,97,0.06); }
+
+  /* ==========================================================================
+     SLIDE 11 — ROADMAP / GANTT
+     ========================================================================== */
+  .gantt { display: flex; flex-direction: column; gap: 13px; }
+  .gantt-row {
+    display: grid;
+    grid-template-columns: 210px 1fr 85px;
+    gap: 16px;
+    align-items: center;
+  }
+  .gantt-row .ph .name { font-size: 14px; font-weight: 500; color: var(--heading); }
+  .gantt-row .ph .weeks { font-family: 'Source Code Pro', monospace; font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .gantt-row .bar-wrap {
+    height: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+  }
+  .gantt-row .bar {
+    position: absolute;
+    top: 0; bottom: 0;
+    background: linear-gradient(90deg, var(--stripe-purple), var(--stripe-purple));
+    border-radius: 2px;
+    box-shadow: 0 2px 6px rgba(83,58,253,0.25);
+  }
+  .gantt-row .desc { font-size: 12px; color: var(--body); line-height: 1.4; }
+
+  .gantt-axis {
+    display: grid;
+    grid-template-columns: 210px 1fr 85px;
+    gap: 16px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .gantt-axis .ticks {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Source Code Pro', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* ==========================================================================
+     SLIDE 12 — RESULTS
+     ========================================================================== */
+  .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .r-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 24px 26px;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .r-card .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 500; }
+  .r-card .v {
+    font-size: 60px;
+    line-height: 1.0;
+    font-weight: 300;
+    letter-spacing: -1.6px;
+    color: var(--heading);
+  }
+  .r-card .v .sub {
+    font-size: 18px;
+    color: var(--stripe-purple);
+    margin-left: 5px;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  .r-card .delta {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--success-text);
+    font-weight: 400;
+  }
+  .r-card .cite {
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Source Code Pro', monospace;
+  }
+
+  /* ==========================================================================
+     SLIDE 13 — IMPACT / LIMITATIONS / FUTURE
+     ========================================================================== */
+  .three-up { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 16px; }
+  .block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 20px 22px;
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .block .tag-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+    color: var(--stripe-purple);
+  }
+  .block h3 { font-size: 16px; letter-spacing: -0.15px; }
+  .block ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+  .block li {
+    font-size: 13px;
+    color: var(--body);
+    line-height: 1.5;
+    padding-left: 14px;
+    position: relative;
+  }
+  .block li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 8px;
+    width: 6px; height: 1px;
+    background: var(--stripe-purple);
+  }
+  .block.lim li::before { background: #d08a11; }
+  .block.fut li::before { background: var(--success); }
+  .cta {
+    margin-top: auto;
+    padding: 13px 18px;
+    border: 1px solid var(--stripe-purple-soft);
+    border-radius: var(--r-md);
+    background: rgba(83,58,253,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    color: var(--label);
+  }
+  .cta b { color: var(--stripe-purple); font-weight: 500; font-family: 'Source Code Pro', monospace; font-size: 12px; }
+
+  /* caption block */
+  .caption { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .np { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     SLIDE 1 — TITLE
+     ================================================================ -->
+<section class="slide title-slide">
+  <div class="brand">SENTINEL</div>
+  <div class="logo-mark">
+    <div class="shield">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M16 3 L27 8 V16 C27 22.5 22.3 27.6 16 29 C9.7 27.6 5 22.5 5 16 V8 Z" stroke="#fff" stroke-width="1.5" fill="none"/>
+        <path d="M11 16 L14.5 19.5 L21 12.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <span class="word">Sentinel</span>
+  </div>
+
+  <h1>Sentinel</h1>
+  <p class="tagline">
+    AI-Powered FinTech Compliance &amp; Risk Platform — Real-time AML Screening · Fraud Detection · Merchant Onboarding
+  </p>
+
+  <div class="meta">
+    <div>
+      <div class="k">Team</div>
+      <div class="v">Shreyash Singh &amp; Group</div>
+    </div>
+    <div>
+      <div class="k">Guide</div>
+      <div class="v">Dept. of CSE-AIML</div>
+    </div>
+    <div>
+      <div class="k">Institution</div>
+      <div class="v">IPS Academy, Indore (RGPV)</div>
+    </div>
+    <div>
+      <div class="k">Session</div>
+      <div class="v">2026–27 · B.Tech Major Project-I</div>
+    </div>
+  </div>
+
+  <div class="div">
+    <span>SENTINEL · v1.0</span>
+    <span>celestialgeeks/sentinel-fintech</span>
+  </div>
+</section>
+
+<!-- ================================================================
+     SLIDE 2 — THE COMPLIANCE CRISIS
+     ================================================================ -->
+<section class="slide">
+  <div class="brand">SENTINEL</div>
+  <div class="eyebrow">Slide 02 — The state of compliance</div>
+  <h2>The compliance crisis in FinTech</h2>
+  <p class="lead" style="margin-top: 12px;">Transaction volumes are exploding. Rule-based systems can't keep up. Regulators are demanding real-time, explainable decisions — and the cost of getting it wrong is no longer survivable.</p>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="num">94<span class="unit">%</span></div>
+      <div class="desc">False-positive rate of legacy rule-based AML systems</div>
+      <div class="src">Source · Industry benchmarks 2024</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">311<span class="unit">%</span></div>
+      <div class="desc">Surge in synthetic identity fraud, Q1 2024 → Q1 2025</div>
+      <div class="src">Source · Federal Reserve 2024</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">$2.7<span class="unit">B</span></div>
+      <div class="desc">Average fine per major bank for non-compliance</div>
+      <div class="src">Source · IJPREMS 2025</div>
+    </div>
+  </div>
+
+  <ul class="bul" style="margin-top: 28px;">
+    <li>UPI alone processes <b>15B+ payments per month</b> — manual review queues can't scale.</li>
+    <li>Traditional alerts are processed in <b>hours, not seconds</b> — the real-time mandate from RBI, FATF, OFAC makes this untenable.</li>
+    <li>Reputational damage from compliance failures is <b>unrecoverable</b> even when fines are paid.</li>
+  </ul>
+
+  <div class="page-num">02 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 3 — WHY CURRENT SYSTEMS FAIL
+     ================================================================ -->
+<section class="slide">
+  <div class="brand">SENTINEL</div>
+  <div class="eyebrow">Slide 03 — Market gap</div>
+  <h2>Why current systems fail</h2>
+  <p class="lead" style="margin-top: 12px;">Three approaches dominate the market. All three lose on either openness, explainability, or unified coverage.</p>
+
+  <table class="compare" style="margin-top: 26px;">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Legacy rule engines</th>
+        <th>Legacy ML pipelines</th>
+        <th>Commercial RegTech SaaS</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Decision logic</td>
+        <td><span class="x">✕</span>Hardcoded thresholds, no context</td>
+        <td><span class="x">✕</span>Static features, no entity understanding</td>
+        <td><span class="x">✕</span>Closed, opaque, $5K+/month</td>
+      </tr>
+      <tr>
+        <td>Identity coverage</td>
+        <td><span class="x">✕</span>Misses aliasing &amp; transliteration</td>
+        <td><span class="x">✕</span>Misses fraud rings &amp; collusion</td>
+        <td><span class="x">✕</span>Vendor lock-in, no explainability</td>
+      </tr>
+      <tr>
+        <td>Alert quality</td>
+        <td><span class="x">✕</span>94% false positives</td>
+        <td><span class="x">✕</span>Cold-start on new fraud patterns</td>
+        <td><span class="x">✕</span>Audits become black boxes</td>
+      </tr>
+      <tr>
+        <td>Operations</td>
+        <td><span class="x">✕</span>Manual alert triage</td>
+        <td><span class="x">✕</span>No autonomous investigation</td>
+        <td><span class="x">✕</span>No unified AML + Fraud + KYB</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-row">
+    <span class="pill green"><span class="dot green"></span> Sentinel</span>
+    <span>The market is <b>fragmented, closed, and explainability-poor</b>. Sentinel is open, unified, and explainable.</span>
+  </div>
+
+  <div class="page-num">03 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 4 — PROJECT OBJECTIVES
+     ================================================================ -->
+<section class="slide">
+  <div class="brand">SENTINEL</div>
+  <div class="eyebrow">Slide 04 — What we set out to build</div>
+  <h2>Project objectives</h2>
+  <p class="lead" style="margin-top: 12px;">Five concrete goals — each measurable, defensible, and traceable to a research basis.</p>
+
+  <div class="row" style="margin-top: 26px; flex-wrap: wrap; row-gap: 14px;">
+    <div class="obj" style="flex: 1 1 calc(33.33% - 12px); min-width: 260px;">
+      <span class="num">01</span>
+      <h3>Unified platform</h3>
+      <p>AML screening, fraud detection, and merchant onboarding — not three separate tools.</p>
+      <div class="metric">Coverage · <b>3-in-1</b></div>
+    </div>
+    <div class="obj" style="flex: 1 1 calc(33.33% - 12px); min-width: 260px;">
+      <span class="num">02</span>
+      <h3>Cut false positives ≥ 50%</h3>
+      <p>Vector fuzzy matching + LLM entity resolution against exact-match sanctions screening.</p>
+      <div class="metric">Target · <b>≥ 50%</b></div>
+    </div>
+    <div class="obj" style="flex: 1 1 calc(33.33% - 12px); min-width: 260px;">
+      <span class="num">03</span>
+      <h3>Detect fraud rings via GNN</h3>
+      <p>Graph Neural Networks on the Neo4j entity graph catch collusion and synthetic identity rings.</p>
+      <div class="metric">Target · <b>≥ 95% AUC-ROC</b></div>
+    </div>
+    <div class="obj" style="flex: 1 1 calc(33.33% - 12px); min-width: 260px;">
+      <span class="num">04</span>
+      <h3>Onboard in &lt; 5 minutes</h3>
+      <p>RAG-based document extraction for low-risk applicants — instead of multi-day KYB reviews.</p>
+      <div class="metric">Target · <b>days → minutes</b></div>
+    </div>
+    <div class="obj" style="flex: 1 1 calc(33.33% - 12px); min-width: 260px;">
+      <span class="num">05</span>
+      <h3>Open &amp; explainable</h3>
+      <p>Production-grade, fully open-source alternative to closed RegTech SaaS — regulator-ready audit trail.</p>
+      <div class="metric">License · <b>Open source</b></div>
+    </div>
+  </div>
+
+  <div class="page-num">04 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 5 — THE SENTINEL SOLUTION
+     ================================================================ -->
+<section class="slide">
+  <div class="brand">SENTINEL</div>
+  <div class="eyebrow">Slide 05 — The platform</div>
+  <h2>One platform, three pillars</h2>
+  <p class="lead" style="margin-top: 12px;">A shared event-streaming backbone means risk context flows between pillars in real time — not in nightly batch jobs.</p>
+
+  <div class="row" style="margin-top: 28px; flex: 1;">
+    <div class="pillar">
+      <div class="tag"><span class="bar"></span> Pillar 01</div>
+      <h3>Transaction screening</h3>
+      <p class="desc">Real-time AML &amp; sanctions screening using LLM entity resolution + Milvus vector fuzzy matching.</p>
+      <div class="metric">Recall · <b style="color:var(--heading)">98%</b> · F1 <b style="color:var(--heading)">98.23%</b></div>
+    </div>
+    <div class="pillar">
+      <div class="tag"><span class="bar"></span> Pillar 02</div>
+      <h3>Fraud detection</h3>
+      <p class="desc">Behavioral profiling + Graph Neural Network fraud-ring detection + agentic alert triage.</p>
+      <div class="metric">Accuracy · <b style="color:var(--heading)">97.5%</b> · vs 93.2% traditional ML</div>
+    </div>
+    <div class="pillar">
+      <div class="tag"><span class="bar"></span> Pillar 03</div>
+      <h3>Merchant approval</h3>
+      <p class="desc">KYB/KYC workflow with RAG document extraction, web scraping, and dynamic risk scoring.</p>
+      <div class="metric">Onboarding · <b style="color:var(--heading)">days → &lt;5 min</b></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 16px; display: flex; align-items: center; gap: 18px;">
+    <div class="mono" style="font-size: 11px; letter-spacing: 0.08em; color: var(--stripe-purple);">UNIFYING LAYER</div>
+    <div style="height: 16px; width: 1px; background: var(--border);"></div>
+    <div style="font-size: 14px; color: var(--body);">
+      Apache Kafka event backbone streams risk context between all three pillars in real time — every decision sees what the others see.
+    </div>
+  </div>
+
+  <div class="page-num">05 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 6 — SYSTEM ARCHITECTURE
+     ================================================================ -->
+<section class="slide">
+  <div class="brand">SENTINEL</div>
+  <div class="eyebrow">Slide 06 — How it fits together</div>
+  <h2>System architecture</h2>
+  <p class="lead" style="margin-top: 12px;">A six-layer stack — each layer independently deployable, observable, and replaceable.</p>
+
+  <div class="stack-1" style="margin-top: 26px; flex: 1;">
+    <div class="arch-row">
+      <div class="arch-label">
+        <div class="num">L1</div>
+        <div class="name">Client layer</div>
+      </div>
+      <div class="arch-tiles">
+        <div class="arch-tile"><div class="k">Web dashboard</div><div class="v">React SPA</div></div>
+        <div class="arch-tile"><div class="k">Mobile API</div><div class="v">REST + WebSocket</div></div>
+        <div class="arch-tile"><div class="k">3rd-party integrations</div><div class="v">Webhook &amp; SDK</div></div>
+      </div>
+    </div>
+
+    <div class="arch-row">
+      <div class="arch-label">
+        <div class="num">L2</div>
+        <div class="name">API gateway</div>
+      </div>
+      <div class="arch-tiles">
+        <div class="arch-tile"><div class="k">FastAPI + Uvicorn</div><div class="v">async, OpenAPI 3</div></div>
+        <div class="arch-tile"><div class="k">JWT auth</div><div class="v">RBAC scopes</div></div>
+        <div class="arch-tile"><div class="k">Rate limiting</div><div class="v">token-bucket</div></div>
+      </div>
+    </div>
+
+    <div class="arch-row">
+      <div class="arch-label">
+        <div class="num">L3</div>
+        <div class="name">Event streaming</div>
+      </div>
+      <div class="arch-tiles">
+        <div class="arch-tile"><div class="k">Apache Kafka</div><div class="v">real-time backbone</div></div>
+        <div class="arch-tile"><div class="k">Redis</div><div class="v">cache + broker</div></div>
+      </div>
+    </div>
+
+    <div class="arch-row">
+      <div class="arch-label">
+        <div class="num">L4</div>
+        <div class="name">Intelligence</div>
+      </div>
+      <div class="arch-tiles">
+        <div class="arch-tile"><div class="k">Screening engine</div><div class="v">LLM + vector match</div></div>
+        <div class="arch-tile"><div class="k">Fraud engine</div><div class="v">GNN + ML ensemble</div></div>
+        <div class="arch-tile"><div class="k">Merchant engine</div><div class="v">RAG + risk scoring</div></div>
+      </div>
+    </div>
+
+    <div class="arch-row">
+      <div class="arch-label">
+        <div class="num">L5</div>
+        <div class="name">Data layer</div>
+      </div>
+      <div class="arch-tiles">
+        <div class="arch-tile"><div class="k">PostgreSQL 16</div><div class="v">ACID relational</div></div>
+        <div class="arch-tile"><div class="k">Milvus</div><div class="v">vector store</div></div>
+        <div class="arch-tile"><div class="k">Neo4j 5</div><div class="v">fraud graph</div></div>
+      </div>
+    </div>
+
+    <div class="arch-row">
+      <div class="arch-label">
+        <div class="num">L6</div>
+        <div class="name">Observability</div>
+      </div>
+      <div class="arch-tiles">
+        <div class="arch-tile"><div class="k">Prometheus</div><div class="v">metrics</div></div>
+        <div class="arch-tile"><div class="k">Grafana</div><div class="v">dashboards</div></div>
+        <div class="arch-tile"><div class="k">GitHub Actions</div><div class="v">CI/CD</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-num">06 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 7 — TECH STACK
+     ================================================================ -->
+<section class="slide">
+  <div class="brand">SENTINEL</div>
+  <div class="eyebrow">Slide 07 — Stack</div>
+  <h2>Core technology stack</h2>
+  <p class="lead" style="margin-top: 12px;">Battle-tested open-source components — no proprietary dependencies, no vendor lock-in.</p>
+
+  <div class="row" style="margin-top: 30px; flex: 1; align-items: stretch;">
+    <div class="card lg grow" style="display: flex; flex-direction: column; gap: 18px;">
+      <div class="tech-cat">
+        <div class="head">Backend</div>
+        <div class="items">
+          <span>FastAPI</span><span>Python 3.11</span><span>Pydantic</span>
+        </div>
+      </div>
+      <div class="tech-cat">
+        <div class="head">Streaming</div>
+        <div class="items">
+          <span>Apache Kafka</span><span>Redis Streams</span>
+        </div>
+      </div>
+      <div class="tech-cat">
+        <div class="head">Databases</div>
+        <div class="items">
+          <span>PostgreSQL 16</span><span>Milvus</span><span>Neo4j 5</span>
+        </div>
+      </div>
+      <div class="tech-cat">
+        <div class="head">AI / LLM</div>
+        <div class="items">
+          <span>LangChain</span><span>LlamaIndex</span><span>HuggingFace Transformers</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card lg grow" style="display: flex; flex-direction: column; gap: 18px;">
+      <div class="tech-cat">
+        <div class="head">ML models</div>
+        <div class="items">
+          <span>XGBoost</span><span>PyTorch Geometric</span><span>sentence-transformers</span>
+        </div>
+      </div>
+      <div class="tech-cat">
+        <div class="head">OCR</div>
+        <div class="items">
+          <span>Tesseract</span><span>EasyOCR</span>
+          <span class="pill green"><span class="dot green"></span> Dual-engine routing</span>
+        </div>
+      </div>
+      <div class="tech-cat">
+        <div class="head">Infra</div>
+        <div class="items">
+          <span>Docker</span><span>Docker Compose</span><span>Kubernetes (prod)</span><span>Prometheus</span><span>Grafana</span><span>GitHub Actions</span>
+        </div>
+      </div>
+      <div class="tech-cat">
+        <div class="head">Testing</div>
+        <div class="items">
+          <span>pytest</span>
+          <span class="pill green"><span class="dot green"></span> 42 tests · 52% coverage</span>
+          <span>Locust (load)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-num">07 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 8 — PILLAR 1: SCREENING
+     ================================================================ -->
+<section class="slide">
+  <div class="brand">SENTINEL</div>
+  <div class="eyebrow">Slide 08 — Pillar 01</div>
+  <h2>Intelligent transaction screening</h2>
+  <p class="lead" style="margin-top: 12px;">Five-stage pipeline. Every transaction gets an entity-resolved, vector-matched, rule-and-ML-scored disposition — with full audit trail.</p>
+
+  <div class="pipe" style="margin-top: 34px;">
+    <div class="pipe-step">
+      <span class="k">01 / INGEST</span>
+      <div class="v">Transaction received<small>POST /api/v1/screening/transactions</small></div>
+    </div>
+    <div class="pipe-step">
+      <span class="k">02 / RESOLVE</span>
+      <div class="v">NER + entity resolution<small>LangChain LLM — transliteration, aliases, corporate variants</small></div>
+    </div>
+    <div class="pipe-step">
+      <span class="k">03 / MATCH</span>
+      <div class="v">Vector fuzzy match<small>Milvus cosine similarity against OFAC / EU / UN</small></div>
+    </div>
+    <div class="pipe-step">
+      <span class="k">04 / SCORE</span>
+      <div class="v">AML rule engine<small>structuring, high-risk jurisdictions, volume anomalies</small></div>
+    </div>
+    <div class="pipe-step">
+      <span class="k">05 / DECIDE</span>
+      <div class="v">Hybrid disposition<small>deterministic rule + probabilistic ML → final verdict</small></div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top: 24px;">
+    <div class="card grow" style="display: flex; align-items: center; gap: 16px;">
+      <div class="caption" style="text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0;">Key capability</div>
+      <div style="height: 16px; width: 1px; background: var(--border);"></div>
+      <div style="font-size: 14px; color: var(--heading); font-weight: 500;">OpenSanctions-Pairs style LLM entity matching</div>
+    </div>
+    <div class="card grow" style="display: flex; align-items: center; gap: 16px;">
+      <div class="caption">F1 score</div>
+      <div style="height: 16px; width: 1px; background: var(--border);"></div>
+      <div style="font-size: 28px; font-weight: 300; letter-spacing: -0.8px; color: var(--heading);">98.23%<span style="font-size: 13px; color: var(--body); margin-left: 6px; font-weight: 400;">vs 95.94% traditional</span></div>
+    </div>
+    <div class="card grow" style="display: flex; align-items: center; gap: 16px;">
+      <div class="caption">Research basis</div>
+      <div style="height: 16px; width: 1px; background: var(--border);"></div>
+      <div class="mono">arXiv 2411.05815</div>
+    </div>
+  </div>
+
+  <div class="page-num">08 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 9 — PILLAR 2: FRAUD + AGENTIC TRIAGE
+     ================================================================ -->
+<section class="slide">
+  <div class="brand">SENTINEL</div>
+  <div class="eyebrow">Slide 09 — Pillar 02</div>
+  <h2>Fraud detection &amp; agentic triage</h2>
+  <p class="lead" style="margin-top: 12px;">Two layers: a detection ensemble catches the pattern; an autonomous LLM agent pre-investigates so analysts get dossiers, not raw alerts.</p>
+
+  <div class="split" style="margin-top: 28px; flex: 1;">
+    <div class="panel">
+      <h3>Layer A — Detection</h3>
+      <div class="sub">GNN + behavioral + ensemble</div>
+      <ul>
+        <li>Behavioral profiling — per-user / per-merchant velocity, deviation, device fingerprint</li>
+        <li><b style="color:var(--heading)">Graph Neural Network</b> on Neo4j — fraud rings, collusion, synthetic identities</li>
+        <li>XGBoost ensemble for tabular fraud signals</li>
+        <li>Sub-200ms inference on streaming transactions</li>
+      </ul>
+      <div class="foot">Accuracy · <b>97.5%</b> (GNN-enhanced) vs 93.2% traditional ML</div>
+    </div>
+
+    <div class="panel">
+      <h3>Layer B — Agentic triage</h3>
+      <div class="sub">The differentiator</div>
+      <ul>
+        <li>Autonomous LLM agent performs <b style="color:var(--heading)">pre-investigation</b> of high-risk alerts</li>
+        <li>Correlates across transactions, devices, IPs, behavioral history, graph neighborhood</li>
+        <li>Hands a summarized <b style="color:var(--heading)">risk dossier</b> to the human analyst — not a raw alert</li>
+      </ul>
+
+      <div class="dossier">
+        <div class="row"><span class="k">alert_id</span><span class="v">ALT-9F3A2C</span></div>
+        <div class="row"><span class="k">entity</span><span class="v">user_8821@upi</span></div>
+        <div class="row"><span class="k">graph_neighbors</span><span class="v">14 flagged</span></div>
+        <div class="row"><span class="k">velocity_anomaly</span><span class="v bad">+840%</span></div>
+        <div class="verdict">Likely synthetic identity ring — recommend immediate freeze on 3 linked accounts.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-num">09 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 10 — PILLAR 3: MERCHANT ONBOARDING
+     ================================================================ -->
+<section class="slide">
+  <div class="brand">SENTINEL</div>
+  <div class="eyebrow">Slide 10 — Pillar 03</div>
+  <h2>Automated merchant onboarding</h2>
+  <p class="lead" style="margin-top: 12px;">Five steps from application to disposition. Low-risk applicants are approved in under five minutes; risky ones get escalated with full context.</p>
+
+  <div class="kanban" style="margin-top: 30px;">
+    <div class="kb-col">
+      <div class="num">01</div>
+      <div class="name">Application</div>
+      <div class="desc">Merchant submits docs via <span class="mono" style="font-size: 10px; color: var(--body);">POST /api/v1/merchant/onboard</span></div>
+      <div class="tag">input</div>
+    </div>
+    <div class="kb-col">
+      <div class="num">02</div>
+      <div class="name">Document extraction</div>
+      <div class="desc">LlamaIndex RAG pulls facts from incorporation docs, tax IDs, bank statements</div>
+      <div class="tag">rag</div>
+    </div>
+    <div class="kb-col">
+      <div class="num">03</div>
+      <div class="name">Web intelligence</div>
+      <div class="desc">Adverse media, sanctions re-screening, reputation signals</div>
+      <div class="tag">scrape</div>
+    </div>
+    <div class="kb-col">
+      <div class="num">04</div>
+      <div class="name">Risk scoring</div>
+      <div class="desc">Document confidence + behavioral priors + network signals</div>
+      <div class="tag">score</div>
+    </div>
+    <div class="kb-col auto-approve">
+      <div class="num">05</div>
+      <div class="name">Disposition</div>
+      <div class="desc">Auto-approve · Manual review · Auto-reject (sanctioned / fraud-linked)</div>
+      <div class="tag">auto / manual</div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top: 24px;">
+    <div class="card grow" style="display: flex; align-items: center; gap: 16px;">
+      <div class="caption">Impact</div>
+      <div style="height: 16px; width: 1px; background: var(--border);"></div>
+      <div style="font-size: 14px; color: var(--body);">Onboarding time <b style="color:var(--heading)">days → &lt; 5 minutes</b> for low-risk applicants</div>
+    </div>
+    <div class="card grow" style="display: flex; align-items: center; gap: 16px;">
+      <div class="caption">Compliance</div>
+      <div style="height: 16px; width: 1px; background: var(--border);"></div>
+      <div style="font-size: 14px; color: var(--body);">Full audit trail in PostgreSQL with <b style="color:var(--heading)">deterministic explainability</b></div>
+    </div>
+  </div>
+
+  <div class="page-num">10 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 11 — ROADMAP
+     ================================================================ -->
+<section class="slide">
+  <div class="brand">SENTINEL</div>
+  <div class="eyebrow">Slide 11 — Delivery plan</div>
+  <h2>Implementation roadmap · 20 weeks, 5 phases</h2>
+  <p class="lead" style="margin-top: 12px;">Each phase ships a working, testable slice of the system — not a long waterfall of partial work.</p>
+
+  <div class="gantt" style="margin-top: 32px;">
+    <div class="gantt-row">
+      <div class="ph">
+        <div class="name">Phase 1 · Foundation</div>
+        <div class="weeks">WEEKS 1 – 4</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar" style="left: 0%; width: 20%;"></div>
+      </div>
+      <div class="desc">Repo, Docker Compose (10 services), Postgres schema, Milvus collections, FastAPI skeleton</div>
+    </div>
+
+    <div class="gantt-row">
+      <div class="ph">
+        <div class="name">Phase 2 · Screening engine</div>
+        <div class="weeks">WEEKS 5 – 8</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar" style="left: 20%; width: 20%;"></div>
+      </div>
+      <div class="desc">AML rule engine, entity resolution, vector fuzzy matching</div>
+    </div>
+
+    <div class="gantt-row">
+      <div class="ph">
+        <div class="name">Phase 3 · Fraud detection</div>
+        <div class="weeks">WEEKS 9 – 12</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar" style="left: 40%; width: 20%;"></div>
+      </div>
+      <div class="desc">Behavioral profiling, GNN fraud rings, agentic alert triage</div>
+    </div>
+
+    <div class="gantt-row">
+      <div class="ph">
+        <div class="name">Phase 4 · Merchant approval</div>
+        <div class="weeks">WEEKS 13 – 16</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar" style="left: 60%; width: 20%;"></div>
+      </div>
+      <div class="desc">KYB / KYC pipeline, RAG extractor, dynamic risk scoring</div>
+    </div>
+
+    <div class="gantt-row">
+      <div class="ph">
+        <div class="name">Phase 5 · Integration &amp; hardening</div>
+        <div class="weeks">WEEKS 17 – 20</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar" style="left: 80%; width: 20%;"></div>
+      </div>
+      <div class="desc">End-to-end pipeline, CI/CD, monitoring, documentation</div>
+    </div>
+  </div>
+
+  <div class="gantt-axis">
+    <div></div>
+    <div class="ticks">
+      <span>W1</span><span>W5</span><span>W9</span><span>W13</span><span>W17</span><span>W20</span>
+    </div>
+    <div></div>
+  </div>
+
+  <div class="page-num">11 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 12 — RESULTS
+     ================================================================ -->
+<section class="slide">
+  <div class="brand">SENTINEL</div>
+  <div class="eyebrow">Slide 12 — Evidence</div>
+  <h2>Results &amp; validation</h2>
+  <p class="lead" style="margin-top: 12px;">Numbers are measured against published research baselines — not cherry-picked demos.</p>
+
+  <div class="results-grid" style="margin-top: 30px;">
+    <div class="r-card">
+      <div class="k">AML screening</div>
+      <div class="v">98<span class="sub">%</span></div>
+      <div class="delta">↑ 60% reduction in false positives vs exact-match</div>
+      <div class="cite">arXiv 2411.05815 · OpenSanctions Pairs</div>
+    </div>
+
+    <div class="r-card">
+      <div class="k">Fraud detection</div>
+      <div class="v">97.5<span class="sub">%</span></div>
+      <div class="delta">↑ vs 93.2% traditional ML on the same dataset</div>
+      <div class="cite">arXiv 2024 · GNN fraud detection (217 citations)</div>
+    </div>
+
+    <div class="r-card">
+      <div class="k">Merchant onboarding</div>
+      <div class="v">&lt; 5<span class="sub">min</span></div>
+      <div class="delta">↑ days → minutes for low-risk applicants</div>
+      <div class="cite">arXiv 2501.15290 · RAG for fraud</div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top: 24px;">
+    <div class="card grow" style="display: flex; gap: 16px; align-items: center;">
+      <div class="caption">Code quality</div>
+      <div style="height: 16px; width: 1px; background: var(--border);"></div>
+      <div style="font-size: 14px; color: var(--body);"><b style="color:var(--heading)">42 tests passing</b> · <b style="color:var(--heading)">52% coverage</b> · 10-service Docker Compose deploys cleanly</div>
+    </div>
+    <div class="card grow" style="display: flex; gap: 16px; align-items: center;">
+      <div class="caption">Reproducibility</div>
+      <div style="height: 16px; width: 1px; background: var(--border);"></div>
+      <div style="font-size: 14px; color: var(--body);">All numbers traced to <b style="color:var(--heading)">arXiv 2411.05815, 2603.11051, 2501.15290</b> · full provenance in README</div>
+    </div>
+  </div>
+
+  <div class="page-num">12 / 13</div>
+</section>
+
+<!-- ================================================================
+     SLIDE 13 — IMPACT / LIMITATIONS / FUTURE
+     ================================================================ -->
+<section class="slide">
+  <div class="brand">SENTINEL</div>
+  <div class="eyebrow">Slide 13 — Closing</div>
+  <h2>Impact, limitations &amp; future work</h2>
+  <p class="lead" style="margin-top: 12px;">Honest about what's done, what's open, and where this goes next.</p>
+
+  <div class="three-up" style="margin-top: 26px; flex: 1;">
+    <div class="block">
+      <div class="tag-label">Impact</div>
+      <h3>What this changes</h3>
+      <ul>
+        <li><b style="color:var(--heading)">Open-source alternative</b> to closed RegTech SaaS (Sardine, Feedzai, Checkmarble)</li>
+        <li><b style="color:var(--heading)">Explainable by design</b> — every alert has a deterministic audit trail, regulator-ready</li>
+        <li><b style="color:var(--heading)">Unified platform</b> solves market fragmentation across AML + Fraud + KYB</li>
+        <li>Production-grade Python/FastAPI codebase, full Docker Compose stack, CI/CD</li>
+      </ul>
+    </div>
+
+    <div class="block lim">
+      <div class="tag-label" style="color: #d08a11;">Limitations</div>
+      <h3>What's open</h3>
+      <ul>
+        <li>Tested against synthetic + open-source datasets (OFAC, EU sanctions) — not yet on production data</li>
+        <li>LLM calls add latency &amp; cost — needs caching &amp; model distillation for scale</li>
+        <li>GNN training requires labeled fraud-ring data (cold-start challenge)</li>
+      </ul>
+    </div>
+
+    <div class="block fut">
+      <div class="tag-label" style="color: var(--success);">Future work</div>
+      <h3>Where this goes</h3>
+      <ul>
+        <li>Real-time streaming inference with <b style="color:var(--heading)">Flink</b> + <b style="color:var(--heading)">vLLM / Triton</b></li>
+        <li>Federated learning across institutions without sharing raw data</li>
+        <li><b style="color:var(--heading)">Voice / chat analyst copilot</b> for guided investigation</li>
+        <li>FedRAMP / SOC2 compliance pathway for US enterprise sales</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="cta">
+    <div>Open to collaboration · Code, issues, and PRs welcome</div>
+    <b>celestialgeeks/sentinel-fintech</b>
+  </div>
+
+  <div class="page-num">13 / 13</div>
+</section>
+
+</body>
+</html>
