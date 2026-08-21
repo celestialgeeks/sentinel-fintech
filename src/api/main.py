@@ -84,10 +84,14 @@ async def health() -> dict[str, str]:
 from src.fraud.routers import router as fraud_router  # noqa: E402
 from src.api.routers.screening import router as screening_router  # noqa: E402
 from src.api.routers.merchant import router as merchant_router  # noqa: E402
+from src.gateway.router import router as gateway_router  # noqa: E402
+from src.verification.router import router as verification_router  # noqa: E402
 
 app.include_router(fraud_router, prefix="/api/v1/fraud")
 app.include_router(screening_router, prefix="/api/v1")
 app.include_router(merchant_router, prefix="/api/v1")
+app.include_router(gateway_router, prefix="/api/v1")
+app.include_router(verification_router, prefix="/api/v1")
 
 
 logger.info("FastAPI app factory loaded")
