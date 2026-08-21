@@ -77,16 +77,16 @@ class TestDecisionEngine:
         result = await engine.decide(
             payment_id="review_001",
             trail_analysis={
-                "aggregated_risk_score": 0.55,
+                "aggregated_risk_score": 0.8,
                 "flags": {"circular_flow": False, "structuring": False, "sanctions_matches": []},
             },
             screening_result={
-                "risk_score": 0.5,
+                "risk_score": 0.75,
                 "flags": ["high_risk_country"],
                 "matched_entities": [],
             },
             verification_result={
-                "confidence": 0.6,
+                "confidence": 0.4,
                 "questions_asked": 1,
                 "questions_answered": 1,
             },
@@ -99,11 +99,11 @@ class TestDecisionEngine:
         engine = DecisionEngine(policy=policy)
         result = await engine.decide(
             payment_id="custom_001",
-            trail_analysis={"aggregated_risk_score": 0.75, "flags": {}},
-            screening_result={"risk_score": 0.7, "flags": [], "matched_entities": []},
-            verification_result={"confidence": 0.5, "questions_asked": 0, "questions_answered": 0},
+            trail_analysis={"aggregated_risk_score": 1.0, "flags": {}},
+            screening_result={"risk_score": 1.0, "flags": ["high_risk_country"], "matched_entities": []},
+            verification_result={"confidence": 0.1, "questions_asked": 0, "questions_answered": 0},
         )
-        # With higher thresholds, 0.75 should be REVIEW not BLOCK
+        # Score ≈ 0.35 + 0.35 + 0.135 = 0.835, above review=0.7 but below block=0.9
         assert result["decision"] == "REVIEW"
 
     def test_evidence_collection(self) -> None:
