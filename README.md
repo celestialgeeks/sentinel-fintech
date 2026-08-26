@@ -4,7 +4,7 @@
 
 **Academic Project** — B.Tech Major Project-I, 2026-27  
 **Institution:** IPS Academy, Indore (RGPV University, CSE-AIML Department)  
-**Developed by:** [Your Team Name]
+**Developed by:** Shreyash Singh ([@celestialgeeks](https://github.com/celestialgeeks))
 
 ---
 
