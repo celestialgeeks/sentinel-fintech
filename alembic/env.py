@@ -14,7 +14,7 @@ from alembic import context
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.shared.db import get_settings, engine  # noqa: E402
+from src.shared.db import get_settings, engine, Base  # noqa: E402
 from src.shared.models import *  # noqa: E402,F401 — register all models with Base.metadata
 
 logger = logging.getLogger(__name__)

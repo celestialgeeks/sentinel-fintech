@@ -16,7 +16,35 @@ class PaymentSource(str, Enum):
     """Where the payment originated."""
     STRIPE = "stripe"
     PLAID = "plaid"
+    BINANCE_P2P = "binance_p2p"
+    UPI = "upi"
+    IMPS = "imps"
+    NEFT = "neft"
+    RTGS = "rtgs"
     CUSTOM = "custom"
+
+
+class GuardPhase(str, Enum):
+    """Where in the P2P lifecycle a guard decision is being made."""
+    PRE_SCREEN = "pre_screen"      # order created / buyer claims paid — before money is accepted
+    RELEASE_GATE = "release_gate"  # bank credit confirmed — before USDT leaves escrow
+
+
+class GuardVerdict(str, Enum):
+    """Final ALLOW / HOLD / BLOCK verdict returned to the merchant bot."""
+    ALLOW = "ALLOW"
+    HOLD = "HOLD"
+    BLOCK = "BLOCK"
+
+
+class PaymentMethod(str, Enum):
+    """Instrument the buyer used to pay INR."""
+    UPI = "upi"
+    IMPS = "imps"
+    NEFT = "neft"
+    RTGS = "rtgs"
+    BANK_TRANSFER = "bank_transfer"
+    OTHER = "other"
 
 
 class TrailFlag(str, Enum):
@@ -162,3 +190,61 @@ class GatewayResponse(BaseModel):
     data: Optional[Any] = None
     error: Optional[str] = None
     message: str = ""
+
+
+# ─── Binance P2P domain ───────────────────────────────────────────────────────
+
+
+class BuyerProfile(BaseModel):
+    """Buyer-side identity as exposed by the Binance P2P order."""
+    binance_user: str = Field(..., description="Binance P2P display / merchant user id")
+    verified_name: str = Field(..., description="Name verified on the buyer's Binance KYC")
+    country: str = Field("IN", description="ISO alpha-2 buyer country")
+    trade_count: int = Field(0, ge=0, description="Lifetime completed P2P trades")
+    completion_rate: float = Field(1.0, ge=0.0, le=1.0, description="Buyer order completion rate")
+    account_age_days: Optional[int] = Field(None, description="Days since Binance KYC was created")
+    chat_snippet: Optional[str] = Field(None, description="Latest P2P chat text (deal red-flag NLP)")
+    device_id: Optional[str] = None
+    ip_address: Optional[str] = None
+    risk_flags: list[str] = Field(default_factory=list, description="Bot-supplied raw signals")
+
+
+class PayerPayment(BaseModel):
+    """The actual INR credit observed in the merchant's bank account.
+
+    Populated at RELEASE_GATE from the bank feed / Account Aggregator / UTR.
+    Never store full account numbers — account_no_masked holds last 4 only.
+    """
+    method: PaymentMethod = PaymentMethod.OTHER
+    payer_name_on_account: Optional[str] = Field(None, description="Beneficiary name on the credit")
+    bank_name: Optional[str] = None
+    account_no_masked: Optional[str] = Field(None, description="Last 4 digits only")
+    ifsc: Optional[str] = None
+    vpa: Optional[str] = Field(None, description="UPI VPA if paid via UPI")
+    utr: Optional[str] = Field(None, description="Unique Transaction Reference for the credit")
+    amount: float = Field(..., gt=0, description="INR amount actually credited")
+    credit_ts: Optional[datetime] = Field(None, description="Timestamp credit landed")
+    confirmed: bool = Field(False, description="Bank credit independently confirmed")
+
+
+class TradeWallet(BaseModel):
+    """On-chain / exchange wallet context relevant to the trade."""
+    deposit_address: Optional[str] = Field(None, description="Merchant USDT receiving/trade address")
+    withdrawal_address: Optional[str] = Field(None, description="Buyer payout address if known")
+    chain: str = Field("TRC20", description="Tron/TRC20 is the dominant Binance P2P USDT rail")
+    exchange: Optional[str] = Field(None, description="Exchange the address belongs to, if known")
+
+
+class P2POrder(BaseModel):
+    """Normalized Binance P2P order submitted by the merchant bot to the guard."""
+    order_id: str = Field(..., description="Binance P2P order id")
+    asset: str = Field("USDT", description="Crypto asset being sold")
+    fiat: str = Field("INR", description="Fiat currency")
+    qty: float = Field(..., gt=0, description="USDT quantity the merchant would release")
+    price_inr: float = Field(..., gt=0, description="Agreed INR price")
+    side: str = Field("SELL", description="Merchant side (SELL for a merchant)")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    buyer: BuyerProfile
+    payment: Optional[PayerPayment] = Field(None, description="Filled at release-gate time")
+    wallet: Optional[TradeWallet] = None
+    merchant_id: str = Field("default", description="Which merchant/account the bot serves")

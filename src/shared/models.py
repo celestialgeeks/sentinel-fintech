@@ -322,6 +322,145 @@ class EntityGraph(Base, TimestampMixin):
     )
 
 
+# ─── P2P taint guard models ─────────────────────────────────────────────────
+
+
+class P2POrderRecord(Base, TimestampMixin):
+    """One guarded Binance-P2P order and its final verdict."""
+
+    __tablename__ = "p2p_orders"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    order_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    merchant_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True, default="default")
+    asset: Mapped[str] = mapped_column(String(16), nullable=False, default="USDT")
+    fiat: Mapped[str] = mapped_column(String(8), nullable=False, default="INR")
+    qty: Mapped[float] = mapped_column(Float, nullable=False)
+    price_inr: Mapped[float] = mapped_column(Float, nullable=False)
+    inr_value: Mapped[float] = mapped_column(Float, nullable=False)
+    buyer_user: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    buyer_name: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
+    buyer_country: Mapped[Optional[str]] = mapped_column(String(2), nullable=True)
+    phase: Mapped[str] = mapped_column(String(16), nullable=False, default="release_gate")
+    verdict: Mapped[str] = mapped_column(String(8), nullable=False, index=True)
+    action: Mapped[str] = mapped_column(String(8), nullable=False)
+    risk_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    hard_rules: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+    reasons: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+    degraded: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    decided_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime]
+
+    __table_args__ = (
+        Index("ix_p2p_orders_merchant_verdict", "merchant_id", "verdict"),
+        Index("ix_p2p_orders_decided_at", "decided_at"),
+    )
+
+
+class Counterparty(Base, TimestampMixin):
+    """Persisted repeat-buyer risk state (trust with time-decay)."""
+
+    __tablename__ = "counterparties"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    buyer_key: Mapped[str] = mapped_column(String(128), unique=True, nullable=False, index=True)
+    binance_user: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    verified_name: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
+    seen: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    flagged: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    clean_streak: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    last_risk: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    last_verdict: Mapped[Optional[str]] = mapped_column(String(8), nullable=True)
+    last_seen_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime]
+
+
+class VendorCall(Base, TimestampMixin):
+    """Audit + cost/latency record for each provider call."""
+
+    __tablename__ = "vendor_calls"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    order_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    provider: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    category: Mapped[str] = mapped_column(String(24), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
+    risk: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    cost_usd: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    latency_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime]
+
+    __table_args__ = (Index("ix_vendor_calls_order_provider", "order_id", "provider"),)
+
+
+class EvidenceBundle(Base, TimestampMixin):
+    """Immutable per-order evidence snapshot for compliance / unfreezing."""
+
+    __tablename__ = "evidence_bundles"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    reference: Mapped[str] = mapped_column(String(32), unique=True, nullable=False, index=True)
+    order_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    merchant_id: Mapped[str] = mapped_column(String(64), nullable=False, default="default")
+    phase: Mapped[str] = mapped_column(String(16), nullable=False)
+    verdict: Mapped[str] = mapped_column(String(8), nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime]
+
+
+class SettlementVoucher(Base, TimestampMixin):
+    """Maps an order to an isolated receiving voucher/account for UTR traceability."""
+
+    __tablename__ = "settlement_vouchers"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    order_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    voucher_ref: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    virtual_account: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    vpa: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    utr: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+    amount: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    pool: Mapped[str] = mapped_column(String(32), nullable=False, default="quarantine")
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="issued")
+    credited_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    sweep_after: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime]
+
+    __table_args__ = (Index("ix_vouchers_pool_status", "pool", "status"),)
+
+
+class LienCase(Base, TimestampMixin):
+    """A bank/legal freeze notice mapped to the offending credit + evidence pack."""
+
+    __tablename__ = "lien_cases"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    case_ref: Mapped[str] = mapped_column(String(32), unique=True, nullable=False, index=True)
+    order_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+    utr: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
+    account_no_masked: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
+    source: Mapped[str] = mapped_column(String(24), nullable=False, default="manual")
+    notice_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="open", index=True)
+    evidence_reference: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    created_at: Mapped[datetime]
+    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+
+class ComplianceEvent(Base, TimestampMixin):
+    """STR-context / 194S TDS / KYC-retention records (adjacent compliance)."""
+
+    __tablename__ = "compliance_events"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    order_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    event_type: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    amount: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    payload: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime]
+
+
 # ─── Module-level import guard ────────────────────────────────────────────────
 # Ensure all models are registered with Base.metadata before migrations run.
 # __import__ is used here rather than a direct import to avoid circular deps
@@ -334,4 +473,12 @@ __all__ = [
     "Merchant",
     "UserProfile",
     "EntityGraph",
+    "P2POrderRecord",
+    "Counterparty",
+    "VendorCall",
+    "EvidenceBundle",
+    "SettlementVoucher",
+    "LienCase",
+    "ComplianceEvent",
 ]
+

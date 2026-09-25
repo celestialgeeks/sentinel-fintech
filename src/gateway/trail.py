@@ -37,6 +37,9 @@ class MoneyTrailEngine:
             TrailAnalysis with nodes and risk flags
         """
         depth = depth or self._max_depth
+        # Neo4j cannot parameterise var-length path bounds, so harden the value:
+        # coerce to int and clamp to [1, max_depth] before interpolating the query.
+        depth = max(1, min(int(depth), self._max_depth))
         logger.info("Following money trail for payment %s (depth=%d)", payment_id, depth)
 
         # Query connected entities from Neo4j

@@ -91,7 +91,7 @@ def _get_handler() -> Any:
 
             # Publish decision to Kafka
             if kafka_producer is not None:
-                kafka_producer.produce(
+                await kafka_producer.produce(
                     topic="sentinel.decision",
                     key=payment_id,
                     value={

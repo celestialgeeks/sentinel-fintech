@@ -11,10 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.shared.db import engine, init_db
 from src.shared.cache import redis_client
-from src.shared.kafka import kafka_producer, kafka_consumer
-from src.fraud.routers import router as fraud_router
-from src.api.routers.screening import router as screening_router
-from src.api.routers.merchant import router as merchant_router
+from src.shared.kafka import kafka_consumer
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +85,7 @@ from src.api.routers.merchant import router as merchant_router  # noqa: E402
 from src.gateway.router import router as gateway_router  # noqa: E402
 from src.verification.router import router as verification_router  # noqa: E402
 from src.decision.router import router as decision_router  # noqa: E402
+from src.p2p.router import router as p2p_router  # noqa: E402
 from src.kafka.consumer import setup_consumer  # noqa: E402
 
 app.include_router(fraud_router, prefix="/api/v1/fraud")
@@ -96,6 +94,12 @@ app.include_router(merchant_router, prefix="/api/v1")
 app.include_router(gateway_router, prefix="/api/v1")
 app.include_router(verification_router, prefix="/api/v1")
 app.include_router(decision_router, prefix="/api/v1")
+app.include_router(p2p_router, prefix="/api/v1")
+
+# Guard bot-callback authentication (HMAC) - opt-in via GUARD_HMAC_SECRET.
+from src.api.middleware.hmac_auth import HmacAuthMiddleware  # noqa: E402
+
+app.add_middleware(HmacAuthMiddleware)
 
 
 logger.info("FastAPI app factory loaded")
