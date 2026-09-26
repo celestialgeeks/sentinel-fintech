@@ -41,6 +41,7 @@ class LienNotice(BaseModel):
     order_id: str | None = None
     utr: str | None = None
     account_no_masked: str | None = None
+    merchant_id: str = Field("default", description="Workspace the freeze case belongs to")
     source: str = Field("manual", description="bank_email | webhook | manual")
     notice_text: str = ""
     received_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

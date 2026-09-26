@@ -5,7 +5,9 @@ The merchant bot calls these two gates around a P2P order:
 * POST /p2p/orders/pre-screen     - before accepting the buyer's payment
 * POST /p2p/orders/release-gate   - before releasing USDT from escrow
 
-Plus evidence export and freeze-notice intake. All share pipeline.guard_order.
+Plus freeze-notice intake. All share pipeline.guard_order. Evidence download is
+deliberately not here: a pack carries buyer names, UTRs and masked accounts, so it
+is served authenticated and merchant-scoped from ``src.portal.ledger.router``.
 """
 
 from __future__ import annotations
@@ -13,10 +15,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException
 
 from src.gateway.schemas import GuardPhase
-from src.p2p import evidence, lien, store
+from src.p2p import lien
 from src.p2p.pipeline import guard_order
 from src.p2p.schemas import GuardDecision, GuardRequest, LienNotice
 
@@ -37,17 +39,6 @@ async def release_gate(req: GuardRequest) -> GuardDecision:
     if req.order.payment is None:
         raise HTTPException(status_code=400, detail="release-gate requires order.payment (the observed INR credit)")
     return await guard_order(req.order, GuardPhase.RELEASE_GATE)
-
-
-@router.get("/orders/{order_id}/evidence")
-async def download_evidence(order_id: str, fmt: str = "markdown") -> Response:
-    """Return the stored evidence pack for an order (markdown or json)."""
-    bundle = await store.get_evidence(order_id)
-    if not bundle:
-        raise HTTPException(status_code=404, detail=f"no evidence bundle for order {order_id}")
-    body = evidence.to_markdown(bundle) if fmt == "markdown" else evidence.to_json(bundle)
-    media = "text/markdown" if fmt == "markdown" else "application/json"
-    return Response(content=body, media_type=media)
 
 
 @router.post("/liens")

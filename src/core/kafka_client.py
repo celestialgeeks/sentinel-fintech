@@ -27,7 +27,7 @@ class KafkaSettings(BaseSettings):
     group_id: str = "sentinel"
     auto_offset_reset: str = "earliest"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "case_sensitive": False, "extra": "ignore"}
 
 
 # ── Producer ──────────────────────────────────────────────────────────────────

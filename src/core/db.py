@@ -17,10 +17,15 @@ class Settings(BaseSettings):
     """Application settings loaded from environment / .env."""
 
     database_url: str = "postgresql+asyncpg://sentinel:password@localhost:5432/sentinel"
-    database_pool_size: int = 20
-    database_max_overflow: int = 10
+    database_pool_size: int = 5
+    database_max_overflow: int = 5
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "case_sensitive": True}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "case_sensitive": False, "extra": "ignore"}
+    # case_sensitive=True would require an env var literally named "database_url";
+    # the documented name is DATABASE_URL, so it silently fell back to the default.
+    # extra="ignore": this class reads the shared .env, which also carries keys owned
+    # by Supabase, Redis and the vendor SDKs. Forbidding extras made importing the app
+    # raise as soon as any of those were set, for a settings class that only owns three.
 
 
 @lru_cache

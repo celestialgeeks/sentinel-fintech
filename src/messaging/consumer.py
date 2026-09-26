@@ -7,16 +7,14 @@ Listens to 'sentinel.payment' events and orchestrates:
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
-from src.gateway.ingestion import _ingestor
+from src.core.kafka_client import kafka_producer
 from src.gateway.trail import _trail_engine
 from src.screening.engine import ScreeningEngine
 from src.verification.pipeline import _pipeline
-from src.shared.kafka import kafka_producer, kafka_consumer
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +57,7 @@ def _get_handler() -> Any:
 
             # Phase 2: AML screening (sync — run in executor)
             screening_engine = ScreeningEngine()
-            from src.screening.schemas import TransactionIngest, EntityRef
+            from src.screening.schemas import EntityRef, TransactionIngest
 
             txn = TransactionIngest(
                 transaction_id=payment_id,
@@ -120,9 +118,14 @@ def _get_handler() -> Any:
 
 
 def setup_consumer() -> None:
-    """Register the pipeline handler with the Kafka consumer."""
-    handler = _get_handler()
-    # The consumer is already initialized in src/shared/kafka.py
+    """Register the pipeline handler with the Kafka consumer.
+
+    NOTE: the handler is built here but never subscribed — ``kafka_consumer`` in
+    :mod:`src.core.kafka_client` owns the topic loop. Wiring the two together is
+    open work, so the unused binding is kept explicit instead of deleted.
+    """
+    handler = _get_handler()  # noqa: F841
+    # The consumer is already initialized in src/core/kafka_client.py
     # We just need to ensure the topic is subscribed
     logger.info("Kafka pipeline consumer registered for topics: sentinel.payment, sentinel.trail")
 

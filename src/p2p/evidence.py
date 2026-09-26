@@ -19,8 +19,17 @@ from src.p2p.schemas import GuardDecision
 from src.screening.schemas import CounterpartyScreening
 
 
-def _ref(order_id: str) -> str:
-    return "EV-" + hashlib.sha256(order_id.encode()).hexdigest()[:12].upper()
+def _ref(order_id: str, phase: str, decided_at: datetime) -> str:
+    """Deterministic per *decision*, not per order.
+
+    The same order is screened at both gates, and a HOLD can be re-screened
+    after thirty minutes, so a reference keyed on order id alone collides on the
+    unique ``evidence_bundles.reference`` column: the second pack — usually the
+    release-gate one, which is the pack holding the UTR and payer name — failed
+    to insert and took the whole best-effort session down with it.
+    """
+    seed = f"{order_id}:{phase}:{decided_at.isoformat()}"
+    return "EV-" + hashlib.sha256(seed.encode()).hexdigest()[:12].upper()
 
 
 def build_bundle(
@@ -32,7 +41,7 @@ def build_bundle(
     """Assemble a PII-light, tamper-evident snapshot for one order."""
     payment = order.payment
     return {
-        "reference": _ref(order.order_id),
+        "reference": _ref(order.order_id, phase.value, decision.decided_at),
         "order_id": order.order_id,
         "merchant_id": order.merchant_id,
         "phase": phase.value,
@@ -65,6 +74,16 @@ def build_bundle(
                 "confirmed": payment.confirmed,
             }
             if payment
+            else None
+        ),
+        "wallet": (
+            {
+                "chain": order.wallet.chain,
+                "deposit_address": order.wallet.deposit_address,
+                "withdrawal_address": order.wallet.withdrawal_address,
+                "exchange": order.wallet.exchange,
+            }
+            if order.wallet
             else None
         ),
         "vendor_verdicts": [v.model_dump(mode="json") for v in screening.verdicts],
@@ -110,6 +129,14 @@ def to_markdown(bundle: dict[str, Any]) -> str:
             "## Payment credit",
             f"- Method {p['method']}, UTR {p['utr']}, VPA {p['vpa']}, acct ****{p['account_no_masked']}",
             f"- Payer name on account: '{p['payer_name_on_account']}', confirmed: {p['confirmed']}",
+        ]
+    w = bundle.get("wallet")
+    if w:
+        lines += [
+            "",
+            "## Trade wallet",
+            f"- Chain {w['chain']}, withdrawal address {w['withdrawal_address']}, "
+            f"deposit address {w['deposit_address']}",
         ]
     lines += ["", "## Vendor signals"]
     for v in bundle["vendor_verdicts"]:

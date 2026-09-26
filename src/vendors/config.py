@@ -40,7 +40,7 @@ class VendorSettings(BaseSettings):
     max_vendor_latency_ms: int = 6000          # total fan-out budget per order
     cache_default_ttl: int = 300
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "case_sensitive": False}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "case_sensitive": False, "extra": "ignore"}
 
 
 @lru_cache

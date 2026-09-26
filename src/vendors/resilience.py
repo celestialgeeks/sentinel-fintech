@@ -154,7 +154,7 @@ _mem_cache = _MemoryTTL()
 
 def _redis_or_none():
     try:  # imported lazily so tests without a live Redis still import this module
-        from src.shared.cache import redis_client
+        from src.core.cache import redis_client
 
         return redis_client
     except Exception:  # pragma: no cover

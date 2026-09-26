@@ -27,6 +27,17 @@ def _buyer_key(order: P2POrder) -> str:
     return (order.buyer.binance_user or order.buyer.verified_name or "anon").strip().lower()
 
 
+def guard_timing(seconds: float) -> dict:
+    """Wall-clock of the most recent fan-out, for the persistence layer to record.
+
+    ``vendor_calls.latency_ms`` is what the adapter reported, which for mock
+    providers is 0. The portal's latency KPIs answer a different question — how
+    long the merchant's bot actually waited — so the pipeline times the fan-out
+    and hands that number to :func:`src.p2p.store.persist_outcome`.
+    """
+    return {"_fanout_ms": int(round(seconds * 1000))}
+
+
 async def guard_order(
     order: P2POrder,
     phase: GuardPhase,
@@ -34,7 +45,9 @@ async def guard_order(
     persist: bool = True,
     publish: bool = True,
 ) -> GuardDecision:
+    started = time.perf_counter()
     screening = await get_aggregator().screen(order, phase)
+    fanout = guard_timing(time.perf_counter() - started)
 
     key = _buyer_key(order)
     trust = await guard_state.get_trust(key)
@@ -75,7 +88,7 @@ async def guard_order(
         metrics.record_vendor(v.provider, v.category.value, v.status.value, v.latency_ms, v.cost_usd)
 
     if persist:
-        await store.persist_outcome(order, phase, screening, decision, bundle)
+        await store.persist_outcome(order, phase, screening, decision, bundle, timing=fanout)
         await compliance.record_compliance(order, decision)
 
     if publish:
@@ -90,7 +103,7 @@ async def guard_order(
 
 async def _publish(order: P2POrder, decision: GuardDecision) -> None:
     try:
-        from src.shared.kafka import kafka_producer
+        from src.core.kafka_client import kafka_producer
 
         if kafka_producer is None:
             return

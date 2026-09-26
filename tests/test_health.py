@@ -5,15 +5,16 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
+
 from src.api.main import app
 
 
 def test_health_endpoint() -> None:
     """Health endpoint returns 200 without requiring DB/Redis/Kafka."""
-    with patch("src.shared.db.init_db", new=AsyncMock()), \
-         patch("src.shared.cache.RedisClient.ping", new=AsyncMock(return_value=True)), \
-         patch("src.shared.kafka.kafka_consumer") as mock_consumer, \
-         patch("src.shared.kafka.kafka_producer", None):
+    with patch("src.core.db.init_db", new=AsyncMock()), \
+         patch("src.core.cache.RedisClient.ping", new=AsyncMock(return_value=True)), \
+         patch("src.core.kafka_client.kafka_consumer") as mock_consumer, \
+         patch("src.core.kafka_client.kafka_producer", None):
         mock_consumer.start = AsyncMock()
         mock_consumer.stop = AsyncMock()
         client = TestClient(app, raise_server_exceptions=False)
@@ -26,10 +27,10 @@ def test_health_endpoint() -> None:
 
 def test_openapi_schema() -> None:
     """OpenAPI spec is accessible."""
-    with patch("src.shared.db.init_db", new=AsyncMock()), \
-         patch("src.shared.cache.RedisClient.ping", new=AsyncMock(return_value=True)), \
-         patch("src.shared.kafka.kafka_consumer") as mock_consumer, \
-         patch("src.shared.kafka.kafka_producer", None):
+    with patch("src.core.db.init_db", new=AsyncMock()), \
+         patch("src.core.cache.RedisClient.ping", new=AsyncMock(return_value=True)), \
+         patch("src.core.kafka_client.kafka_consumer") as mock_consumer, \
+         patch("src.core.kafka_client.kafka_producer", None):
         mock_consumer.start = AsyncMock()
         mock_consumer.stop = AsyncMock()
         client = TestClient(app, raise_server_exceptions=False)

@@ -4,16 +4,16 @@ from __future__ import annotations
 
 import pytest
 
+from src.gateway.crm_connectors import PlaidConnector, StripeConnector, get_connector
 from src.gateway.schemas import (
+    EntityRef,
+    GatewayResponse,
+    MoneyTrailNode,
     PaymentEvent,
     PaymentSource,
-    MoneyTrailNode,
     TrailAnalysis,
     TrailFlags,
-    GatewayResponse,
-    EntityRef,
 )
-from src.gateway.crm_connectors import StripeConnector, PlaidConnector, get_connector
 
 
 class TestPaymentEvent:

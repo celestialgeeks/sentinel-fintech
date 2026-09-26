@@ -21,7 +21,7 @@ _WINDOW_S = 48 * 3600  # keep 48h of activity
 
 def _redis_or_none():
     try:
-        from src.shared.cache import redis_client
+        from src.core.cache import redis_client
 
         if getattr(redis_client, "_client", None) is None:
             return None  # not connected yet -> use memory fallback

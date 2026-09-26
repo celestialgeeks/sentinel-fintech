@@ -38,7 +38,9 @@ class TriageAgent:
         # 1. Check behavioral profile
         user_id = context.get("user_id", "")
         if self._profiler and user_id:
-            profile = self._profiler.get_profile(user_id)
+            # Materialises the profile so the z-score and velocity checks below
+            # read from a populated bucket; the returned object is not used here.
+            self._profiler.get_profile(user_id)
             z = self._profiler.amount_z_score(user_id, context.get("amount", 0))
             if z > 2.0:
                 evidence.append(f"Amount z-score: {z:.1f} (high anomaly)")

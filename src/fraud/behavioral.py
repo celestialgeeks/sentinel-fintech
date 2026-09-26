@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import math
 import logging
+import math
 from datetime import datetime, timedelta, timezone
 from typing import Any
 

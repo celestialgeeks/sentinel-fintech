@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from src.verification.pipeline import VerificationPipeline
-from src.verification.strategies import RuleBasedStrategy, AgenticStrategy, HybridStrategy
+from src.verification.strategies import AgenticStrategy, HybridStrategy, RuleBasedStrategy
 
 
 class TestDecisionStrategies:

@@ -8,10 +8,9 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
 from typing import Any, Optional
 
-from src.shared.cache import redis_client
+from src.core.cache import redis_client
 
 logger = logging.getLogger(__name__)
 

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime
+from itertools import count
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
@@ -23,7 +25,7 @@ _triage_agent = MockTriageAgent()
 
 # In-memory alert store (replace with PostgreSQL in production)
 _alerts: dict[str, dict[str, Any]] = {}
-_next_alert_id = 1
+_alert_ids = count(1)
 
 
 @router.post("/check", response_model=FraudScore)
@@ -34,13 +36,11 @@ async def check_fraud(
     country: str = Query("US", description="Transaction country"),
 ) -> FraudScore:
     """Submit a transaction for fraud scoring."""
-    from datetime import datetime, timezone
-    result = _scorer.score(transaction_id, user_id, amount, country, datetime.now(timezone.utc))
+    result = _scorer.score(transaction_id, user_id, amount, country, datetime.now(UTC))
 
     # Create alert if score is high
     if result.combined_score >= 0.4:
-        alert_id = f"alt_{_next_alert_id}"
-        _next_alert_id += 1
+        alert_id = f"alt_{next(_alert_ids)}"
         alert = FraudAlert(
             alert_id=alert_id,
             transaction_id=transaction_id,

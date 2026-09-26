@@ -49,6 +49,7 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+.secrets/
 
 # ─── Logs ──────────────────────────────────────────────────
 *.log
@@ -73,3 +74,7 @@ postgres_data/
 .agentsroom/handoff-transcript-*.txt
 .agentsroom/handoff-summary-*.md
 .agents/mcp_config.json
+
+# npm cache for the local 21st.dev CLI / scaffolding runs
+.tools-cache/
+node_modules/

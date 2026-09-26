@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from typing import Any
+from datetime import datetime, timedelta, timezone
 
-from src.screening.watchlists import HIGH_RISK_JURISDICTIONS, WatchlistEntry
+from src.screening.watchlists import HIGH_RISK_JURISDICTIONS
 
 logger = logging.getLogger(__name__)
 

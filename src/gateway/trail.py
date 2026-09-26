@@ -8,14 +8,14 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
+from src.core.graph_db import neo4j_client
 from src.gateway.schemas import (
     MoneyTrailNode,
     TrailAnalysis,
     TrailFlags,
 )
-from src.shared.graph_db import neo4j_client
 
 logger = logging.getLogger(__name__)
 

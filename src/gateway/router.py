@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException
 
 from src.gateway.ingestion import _ingestor
 from src.gateway.schemas import GatewayResponse, PaymentEvent

@@ -20,11 +20,15 @@ TDS_THRESHOLD_INR = 50_000
 def evaluate_compliance(order: P2POrder, decision: GuardDecision) -> list[dict]:
     inr_value = round(order.qty * order.price_inr, 2)
     events: list[dict] = []
+    # Tagged with the gate that produced them, so the portal's register does not
+    # list the same INR amount twice for an order screened at both gates.
+    phase = decision.phase.value
 
     if decision.verdict.value == "BLOCK":
         events.append(
             {
                 "order_id": order.order_id,
+                "phase": phase,
                 "event_type": "STR_CONTEXT",
                 "amount": inr_value,
                 "payload": {"reasons": decision.reasons, "hard_rules": decision.hard_rules},
@@ -35,13 +39,22 @@ def evaluate_compliance(order: P2POrder, decision: GuardDecision) -> list[dict]:
         events.append(
             {
                 "order_id": order.order_id,
+                "phase": phase,
                 "event_type": "TDS_194S",
                 "amount": inr_value,
                 "payload": {"tds_rate": 0.01, "indicative_tds": round(inr_value * 0.01, 2), "advisory": True},
             }
         )
 
-    events.append({"order_id": order.order_id, "event_type": "KYC_RETENTION", "amount": inr_value, "payload": {"buyer": order.buyer.binance_user}})
+    events.append(
+        {
+            "order_id": order.order_id,
+            "phase": phase,
+            "event_type": "KYC_RETENTION",
+            "amount": inr_value,
+            "payload": {"buyer": order.buyer.binance_user},
+        }
+    )
     return events
 
 

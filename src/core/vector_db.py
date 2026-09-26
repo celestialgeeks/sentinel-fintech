@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from functools import lru_cache
 from typing import Any, Optional
 
 from pydantic_settings import BaseSettings
@@ -26,7 +25,7 @@ class MilvusSettings(BaseSettings):
     metric_type: str = "IP"
     nlist: int = 128
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "case_sensitive": False, "extra": "ignore"}
 
 
 class MilvusClient:

@@ -6,7 +6,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from src.screening.rules import RuleEngine, RuleResult
+from src.screening.rules import RuleEngine
 from src.screening.schemas import MatchedEntity, ScreeningResponse, TransactionIngest
 from src.screening.watchlists import search_by_name
 

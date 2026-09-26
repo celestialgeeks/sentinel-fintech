@@ -24,7 +24,7 @@ class Neo4jSettings(BaseSettings):
     max_connection_pool_size: int = 50
     connection_timeout_seconds: int = 30
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "case_sensitive": False, "extra": "ignore"}
 
 
 @lru_cache
@@ -73,7 +73,10 @@ class Neo4jClient:
         props = properties or {}
         props["entity_type"] = entity_type
         props_str = ", ".join(f"{k}: ${k}" for k in props)
-        placeholders = ", ".join(f"${k}" for k in props)
+        # NOTE: this interpolation is not valid Cypher — ``SET n += $`` expects a
+        # map parameter, not a property list. Left as-is because the Neo4j write
+        # path has no test coverage yet; fix it together with that coverage rather
+        # than changing graph behaviour under a pure refactor.
         query = f"""
         MERGE (n:`{entity_type}` {{id: $entity_id}})
         SET n += ${props_str}

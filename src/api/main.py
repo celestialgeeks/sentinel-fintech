@@ -1,17 +1,33 @@
-"""FastAPI application factory for Sentinel FinTech."""
+"""FastAPI application factory for Sentinel FinTech.
+
+This module is the composition root and nothing more: it builds the app, wires
+lifecycle hooks, installs middleware, and mounts each domain slice's router under
+its ``/api/v1`` prefix. Domain logic lives in the slices themselves (``src.p2p``,
+``src.portal``, ``src.fraud``, …); add an endpoint by editing the slice, not here.
+"""
 
 from __future__ import annotations
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.shared.db import engine, init_db
-from src.shared.cache import redis_client
-from src.shared.kafka import kafka_consumer
+from src.api.middleware.hmac_auth import HmacAuthMiddleware
+from src.core.cache import redis_client
+from src.core.db import engine, init_db
+from src.core.kafka_client import kafka_consumer
+from src.decision.router import router as decision_router
+from src.fraud.router import router as fraud_router
+from src.gateway.router import router as gateway_router
+from src.merchant.router import router as merchant_router
+from src.messaging.consumer import setup_consumer
+from src.p2p.router import router as p2p_router
+from src.screening.router import router as screening_router
+from src.verification.router import router as verification_router
 
 logger = logging.getLogger(__name__)
 
@@ -62,14 +78,21 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
-# CORS
+# CORS. Origins come from CORS_ORIGINS (comma-separated). Credentialed requests
+# are only allowed when the list is explicit: a wildcard plus cookies is a
+# combination browsers reject anyway, so refusing it here is the honest default.
+_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_origins,
+    allow_credentials=("*" not in _origins),
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition", "Content-Type"],
 )
+
+# Guard bot-callback authentication (HMAC) - opt-in via GUARD_HMAC_SECRET.
+app.add_middleware(HmacAuthMiddleware)
 
 
 # ─── Health ──────────────────────────────────────────────────────────────────
@@ -79,27 +102,16 @@ async def health() -> dict[str, str]:
 
 
 # ─── Mount routes ─────────────────────────────────────────────────────────────
-from src.fraud.routers import router as fraud_router  # noqa: E402
-from src.api.routers.screening import router as screening_router  # noqa: E402
-from src.api.routers.merchant import router as merchant_router  # noqa: E402
-from src.gateway.router import router as gateway_router  # noqa: E402
-from src.verification.router import router as verification_router  # noqa: E402
-from src.decision.router import router as decision_router  # noqa: E402
-from src.p2p.router import router as p2p_router  # noqa: E402
-from src.kafka.consumer import setup_consumer  # noqa: E402
-
+# Detection and decisioning slices. Each router already carries its own prefix
+# (see ``prefix=`` in the slice), so the order here only affects /docs grouping.
 app.include_router(fraud_router, prefix="/api/v1/fraud")
 app.include_router(screening_router, prefix="/api/v1")
 app.include_router(merchant_router, prefix="/api/v1")
 app.include_router(gateway_router, prefix="/api/v1")
 app.include_router(verification_router, prefix="/api/v1")
 app.include_router(decision_router, prefix="/api/v1")
+
+# P2P pre-settlement guard (the bot-facing contract).
 app.include_router(p2p_router, prefix="/api/v1")
-
-# Guard bot-callback authentication (HMAC) - opt-in via GUARD_HMAC_SECRET.
-from src.api.middleware.hmac_auth import HmacAuthMiddleware  # noqa: E402
-
-app.add_middleware(HmacAuthMiddleware)
-
 
 logger.info("FastAPI app factory loaded")

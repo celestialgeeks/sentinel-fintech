@@ -11,10 +11,11 @@ Create Date: 2026-09-25
 from __future__ import annotations
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision = "p2pguard0001"
-down_revision = None
+down_revision = "platform0001"
 branch_labels = None
 depends_on = None
 
@@ -64,9 +65,10 @@ def upgrade() -> None:
         sa.Column("last_verdict", sa.String(8), nullable=True),
         sa.Column("last_seen_at", sa.DateTime(), nullable=True),
         sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
-        sa.UniqueConstraint("buyer_key", name="uq_counterparties_buyer_key"),
     )
-    op.create_index("ix_counterparties_buyer_key", "counterparties", ["buyer_key"])
+    # Unique index, no separate unique constraint — mirrors the ORM, where these
+    # columns are declared ``unique=True, index=True``.
+    op.create_index("ix_counterparties_buyer_key", "counterparties", ["buyer_key"], unique=True)
 
     op.create_table(
         "vendor_calls",
@@ -94,9 +96,8 @@ def upgrade() -> None:
         sa.Column("verdict", sa.String(8), nullable=False),
         sa.Column("payload", sa.JSON(), nullable=False),
         sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
-        sa.UniqueConstraint("reference", name="uq_evidence_bundles_reference"),
     )
-    op.create_index("ix_evidence_bundles_reference", "evidence_bundles", ["reference"])
+    op.create_index("ix_evidence_bundles_reference", "evidence_bundles", ["reference"], unique=True)
     op.create_index("ix_evidence_bundles_order_id", "evidence_bundles", ["order_id"])
 
     op.create_table(
@@ -113,9 +114,8 @@ def upgrade() -> None:
         sa.Column("credited_at", sa.DateTime(), nullable=True),
         sa.Column("sweep_after", sa.DateTime(), nullable=True),
         sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
-        sa.UniqueConstraint("order_id", name="uq_settlement_vouchers_order_id"),
     )
-    op.create_index("ix_settlement_vouchers_order_id", "settlement_vouchers", ["order_id"])
+    op.create_index("ix_settlement_vouchers_order_id", "settlement_vouchers", ["order_id"], unique=True)
     op.create_index("ix_settlement_vouchers_voucher_ref", "settlement_vouchers", ["voucher_ref"])
     op.create_index("ix_settlement_vouchers_utr", "settlement_vouchers", ["utr"])
     op.create_index("ix_vouchers_pool_status", "settlement_vouchers", ["pool", "status"])
@@ -133,9 +133,8 @@ def upgrade() -> None:
         sa.Column("evidence_reference", sa.String(32), nullable=True),
         sa.Column("created_at", sa.DateTime(), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=True),
-        sa.UniqueConstraint("case_ref", name="uq_lien_cases_case_ref"),
     )
-    op.create_index("ix_lien_cases_case_ref", "lien_cases", ["case_ref"])
+    op.create_index("ix_lien_cases_case_ref", "lien_cases", ["case_ref"], unique=True)
     op.create_index("ix_lien_cases_order_id", "lien_cases", ["order_id"])
     op.create_index("ix_lien_cases_utr", "lien_cases", ["utr"])
     op.create_index("ix_lien_cases_status", "lien_cases", ["status"])

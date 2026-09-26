@@ -71,7 +71,7 @@ def _sync_handler(topic: str, payload: dict[str, Any]) -> None:
 def start() -> None:
     """Subscribe to sentinel.p2p.order if Kafka libs are present."""
     try:
-        from src.shared.kafka import KafkaConsumerWrapper, KafkaSettings
+        from src.core.kafka_client import KafkaConsumerWrapper, KafkaSettings
 
         wrapper = KafkaConsumerWrapper(
             bootstrap_servers=KafkaSettings().bootstrap_servers,

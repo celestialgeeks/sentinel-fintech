@@ -7,9 +7,9 @@ import logging
 from functools import lru_cache
 from typing import Any, Optional
 
+import redis.asyncio as redis
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
-import redis.asyncio as redis
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ class CacheSettings(BaseSettings):
     redis_url: str = "redis://:password@localhost:6379/0"
     default_ttl: int = 300  # seconds
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "case_sensitive": False, "extra": "ignore"}
 
 
 @lru_cache

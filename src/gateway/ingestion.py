@@ -6,13 +6,12 @@ and publishes to Kafka for downstream processing.
 
 from __future__ import annotations
 
-import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any
 
+from src.core.kafka_client import kafka_producer
 from src.gateway.schemas import EntityRef, PaymentEvent, PaymentSource
-from src.shared.kafka import kafka_producer
 
 logger = logging.getLogger(__name__)
 

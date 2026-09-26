@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import sys
 from pathlib import Path
 
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
 
@@ -14,13 +16,15 @@ from alembic import context
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.shared.db import get_settings, engine, Base  # noqa: E402
-from src.shared.models import *  # noqa: E402,F401 — register all models with Base.metadata
+# Importing the package registers every table on Base.metadata; that is the whole
+# point of the line, so Autogenerate can see the schema.
+from src.core import models as _models  # noqa: E402,F401
+from src.core.db import Base, get_settings  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
 config = context.config
-target_metadata = Base.metadata  # noqa: F821
+target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
@@ -35,26 +39,29 @@ def run_migrations_online() -> None:
     """Run migrations in 'online' mode with async engine."""
     configuration = config.get_section(config.config_ini_section) or {}
     configuration["sqlalchemy.url"] = get_settings().database_url
-    target_metadata = target_metadata
-
-    from sqlalchemy.ext.asyncio import create_async_engine  # noqa: E402
 
     async_engine = create_async_engine(
         configuration["sqlalchemy.url"],
         poolclass=pool.NullPool,
     )
 
+    def do_run_migrations(connection) -> None:
+        # Migrations must see a *sync* connection: alembic introspects the
+        # version table and any guard that calls sa.inspect(bind), neither of
+        # which works against an AsyncConnection.
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+        )
+        with context.begin_transaction():
+            context.run_migrations()
+
     async def run_async_migrations() -> None:
         async with async_engine.connect() as connection:
-            context.configure(
-                connection=connection,
-                target_metadata=target_metadata,
-                compare_type=True,
-            )
-            with context.begin_transaction():
-                context.run_migrations()
+            await connection.run_sync(do_run_migrations)
+        await async_engine.dispose()
 
-    import asyncio  # noqa: E402
     asyncio.run(run_async_migrations())
 
 

@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
 from collections.abc import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 # ---------------------------------------------------------------------------
 # Database fixtures
@@ -22,7 +21,7 @@ async def test_engine():
     """In-memory SQLite engine for tests — avoids needing a real PostgreSQL."""
     engine = create_async_engine(TEST_DATABASE_URL, echo=False)
     async with engine.begin() as conn:
-        from src.shared.db import Base  # noqa: PLC0415 — avoid circular import at collection time
+        from src.core.db import Base  # noqa: PLC0415 — avoid circular import at collection time
         await conn.run_sync(Base.metadata.create_all)
     yield engine
     async with engine.begin() as conn:
@@ -213,11 +212,11 @@ async def mock_neo4j() -> AsyncGenerator[_FakeNeo4j, None]:
 @pytest_asyncio.fixture
 async def client(db_session, mock_redis, mock_milvus, mock_kafka_producer, mock_neo4j):
     """Override shared singletons and return an async TestClient."""
-    import src.shared.db as db_module  # noqa: PLC0415
-    import src.shared.cache as cache_module  # noqa: PLC0415
-    import src.shared.vector_db as vdb_module  # noqa: PLC0415
-    import src.shared.kafka as kafka_module  # noqa: PLC0415
-    import src.shared.graph_db as graph_module  # noqa: PLC0415
+    import src.core.cache as cache_module  # noqa: PLC0415
+    import src.core.db as db_module  # noqa: PLC0415
+    import src.core.graph_db as graph_module  # noqa: PLC0415
+    import src.core.kafka_client as kafka_module  # noqa: PLC0415
+    import src.core.vector_db as vdb_module  # noqa: PLC0415
 
     db_module.engine = test_engine  # type: ignore[attr-defined]
     cache_module.redis_client = mock_redis  # type: ignore[attr-defined]
@@ -226,6 +225,7 @@ async def client(db_session, mock_redis, mock_milvus, mock_kafka_producer, mock_
     graph_module.neo4j_client = mock_neo4j  # type: ignore[attr-defined]
 
     from fastapi.testclient import TestClient  # noqa: PLC0415
+
     from src.api.main import app  # noqa: PLC0415
 
     with TestClient(app) as c:
