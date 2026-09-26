@@ -100,6 +100,9 @@ Key safety properties:
 
 ```
 src/
+├── api/            # composition root: app factory, middleware/, dependencies, rate_limit
+├── core/           # infrastructure: db, cache, kafka_client, graph_db, vector_db, audit
+│   └── models/     # ORM schema, one module per bounded context (platform, guard, portal)
 ├── p2p/            # the guard: rules, fusion, pipeline, orchestrator
 │   ├── fusion.py        # ALLOW/HOLD/BLOCK policy
 │   ├── rules.py         # P2P risk signals
@@ -112,16 +115,35 @@ src/
 │   ├── lien.py          # freeze-notice intake -> evidence case
 │   ├── store.py         # best-effort persistence
 │   └── router.py        # /api/v1/p2p/* endpoints
-├── vendors/        # pluggable data-source adapters (+ mocks, resilience, aggregator)
-├── gateway/        # ingestion + Neo4j money-trail engine
+├── gateway/        # ingestion + Neo4j money-trail engine (+ trail cache)
+├── messaging/      # Kafka consumer driving the real-time payment pipeline
 ├── screening/      # AML rules, watchlists, entity resolution
 ├── fraud/          # behavioural + ML scoring, alert triage
 ├── verification/   # step-up verification pipeline
 ├── decision/       # multi-signal decision engine
 ├── merchant/       # KYB / RAG document extraction, risk scoring
-├── api/            # FastAPI app, middleware (auth, rate-limit, HMAC), routers
-└── shared/         # db, models, cache, kafka, graph_db, vector_db
+├── vendors/        # pluggable data-source adapters (+ mocks, resilience, aggregator)
+├── portal/         # merchant web API, one sub-slice per surface
+│   ├── config.py          # JWT secret, CORS origins
+│   ├── security.py        # PBKDF2 passwords, HS256 sessions, bot credentials (stdlib only)
+│   ├── deps.py            # token -> AccessScope (which merchant_keys you may read)
+│   ├── schemas/           # response models, one module per capability
+│   ├── auth/              # /api/v1/auth/*
+│   ├── integrations/      # /api/v1/integration/* (connect-your-bot wizard)
+│   └── ledger/            # /api/v1/portal/* (authenticated, merchant-scoped)
+│       ├── router.py          # orders, holds, buyers, liens, export, SSE feed
+│       ├── scoping.py         # merchant-scope primitives: scoped(), Filters
+│       ├── mappers.py         # ORM row -> response model shaping (no SQL)
+│       ├── orders.py          # ledger page, order detail, live feed
+│       ├── cases.py           # counterparties, vouchers, liens, compliance, overrides
+│       └── aggregates.py      # dashboard aggregates
+└── scripts/        # operational entry points: migrate, seed_portal, dev_server
 ```
+
+Every domain slice follows the same shape: `router.py` for the HTTP surface,
+`schemas.py` for the wire contract, and one module per responsibility for the
+logic. Nothing in `core/` imports a domain; domains never import each other's
+private helpers.
 
 ---
 
@@ -142,6 +164,24 @@ The guard runs out of the box with deterministic mock providers (no vendor
 contracts needed). Add real keys to `.env` to swap them for live data — the
 provider registry switches automatically. Set `USE_MOCKS_WHEN_UNCONFIGURED=false`
 in production so a missing required provider degrades to `HOLD`.
+
+### Running the portal API without Docker
+
+Frontend work does not need Postgres, Redis or Kafka:
+
+```bash
+python -m src.scripts.dev_server --seed
+# → http://127.0.0.1:8000  (OpenAPI at /docs)
+# → sign in with demo@sentinel.dev / demo-passw0rd-123, merchant_id "default"
+```
+
+This mounts the real routers against a SQLite file. Vendors without a key use
+their deterministic mocks and `guard_state` uses its in-process cache, so
+verdicts, fields and status codes match production. The seed drives actual
+decisions through `pipeline.guard_order` — about a week of orders including
+third-party payments, a mule account, wallet exposure and a freeze case — and
+prints which numbers it simulated (mock vendors make no network call, so latency
+and spend are genuinely zero without that backfill).
 
 ### Calling the gates
 
@@ -168,10 +208,36 @@ X-Sentinel-Signature: hex(hmac_sha256(secret, f"{timestamp}." + raw_body))
 |--------|------|-------------|
 | `POST` | `/api/v1/p2p/orders/pre-screen` | Screen a buyer before accepting payment |
 | `POST` | `/api/v1/p2p/orders/release-gate` | Gate the escrow release on the confirmed credit |
-| `GET`  | `/api/v1/p2p/orders/{id}/evidence` | Export the order's evidence pack (`?fmt=json`) |
 | `POST` | `/api/v1/p2p/liens` | Report a freeze notice and assemble its case |
 | `GET`  | `/api/v1/p2p/health` | Guard health check |
 | `GET`  | `/health` | Service health check |
+
+Merchant portal (session-authenticated, merchant-scoped) — full contract in
+[`docs/PORTAL_API.md`](docs/PORTAL_API.md):
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/auth/signup` · `/auth/login` | Account + workspace, returns a JWT |
+| `GET`  | `/api/v1/auth/me` · `/auth/merchants` | Current user, workspace switcher |
+| `GET/POST/DELETE` | `/api/v1/integration/keys` | Bot credentials; HMAC secret shown once |
+| `GET`  | `/api/v1/integration/status` | Is the bot connected yet? |
+| `POST` | `/api/v1/integration/test` | Run one real decision, persisted nowhere |
+| `GET`  | `/api/v1/portal/orders` | Transaction history with filters + paging |
+| `GET`  | `/api/v1/portal/orders/export` | Same filters as CSV download |
+| `GET`  | `/api/v1/portal/orders/{id}` | Decision, signals, sources, pack, voucher, timeline |
+| `GET`  | `/api/v1/portal/orders/{id}/evidence` | Evidence pack download (`?fmt=markdown\|json`) |
+| `POST` | `/api/v1/portal/orders/{id}/override` | Append-only record of a human disagreement |
+| `GET`  | `/api/v1/portal/holds` | Step-up worklist, oldest first |
+| `GET`  | `/api/v1/portal/counterparties[/{key}]` | Repeat-buyer trust and history |
+| `GET`  | `/api/v1/portal/vouchers` | Quarantine pool with misroute alerts |
+| `GET/POST/PATCH` | `/api/v1/portal/liens[/{ref}]` | Freeze-case workspace |
+| `GET`  | `/api/v1/portal/compliance-events` | Advisory register (STR-context, 194S, KYC) |
+| `GET`  | `/api/v1/portal/overview` · `/insights` · `/stats/summary` | Dashboard aggregates |
+| `GET`  | `/api/v1/portal/feed` | SSE stream of decisions (id cursor, `once=true` fallback) |
+
+Evidence export moved off the bot surface and onto the portal: the pack carries
+buyer names, UTRs and masked accounts, so it is no longer reachable by an
+enumerable order id without a session.
 
 Docs at `/docs` (OpenAPI), metrics at `/metrics`.
 
@@ -186,6 +252,18 @@ docker compose run --rm api pytest tests/ -v
 The guard ships with unit + integration tests (fusion policy, P2P rules,
 vendor-aggregator fail-closed behaviour, both REST gates, HMAC, and the
 idempotent Kafka consumer path) under `tests/test_p2p/`.
+
+Portal tests live in `tests/test_portal/`: signup/login and token handling,
+merchant-scope enforcement (including reading another merchant's order), the
+connection wizard, ledger filters and paging, order-detail assembly across five
+tables, evidence download authentication, overrides and role gating, freeze-case
+lifecycle, aggregates, the SSE feed, and CSV export. They drive the real
+pipeline through the real bot endpoints, so what the portal reads back is what
+the guard actually wrote — including regressions for the two-gate persistence
+and evidence-reference defects fixed alongside this API.
+
+They use `httpx.AsyncClient` over an ASGI transport rather than `TestClient` so
+the app, the test database and the test body share one event loop.
 
 ---
 

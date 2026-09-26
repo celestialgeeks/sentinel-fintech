@@ -9,7 +9,6 @@ its ``/api/v1`` prefix. Domain logic lives in the slices themselves (``src.p2p``
 from __future__ import annotations
 
 import logging
-import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -26,6 +25,10 @@ from src.gateway.router import router as gateway_router
 from src.merchant.router import router as merchant_router
 from src.messaging.consumer import setup_consumer
 from src.p2p.router import router as p2p_router
+from src.portal.auth.router import router as portal_auth_router
+from src.portal.config import cors_origin_list
+from src.portal.integrations.router import router as portal_integration_router
+from src.portal.ledger.router import router as portal_data_router
 from src.screening.router import router as screening_router
 from src.verification.router import router as verification_router
 
@@ -81,7 +84,7 @@ app = FastAPI(
 # CORS. Origins come from CORS_ORIGINS (comma-separated). Credentialed requests
 # are only allowed when the list is explicit: a wildcard plus cookies is a
 # combination browsers reject anyway, so refusing it here is the honest default.
-_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
+_origins = cors_origin_list()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
@@ -113,5 +116,10 @@ app.include_router(decision_router, prefix="/api/v1")
 
 # P2P pre-settlement guard (the bot-facing contract).
 app.include_router(p2p_router, prefix="/api/v1")
+
+# Merchant portal: /api/v1/auth/*, /api/v1/integration/*, /api/v1/portal/*
+app.include_router(portal_auth_router, prefix="/api/v1")
+app.include_router(portal_integration_router, prefix="/api/v1")
+app.include_router(portal_data_router, prefix="/api/v1")
 
 logger.info("FastAPI app factory loaded")
