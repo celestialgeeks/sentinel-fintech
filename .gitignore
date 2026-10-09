@@ -78,3 +78,6 @@ postgres_data/
 # npm cache for the local 21st.dev CLI / scaffolding runs
 .tools-cache/
 node_modules/
+
+# local Vercel CLI login/deploy scaffolding (holds no project source)
+.vercel-tmp/
