@@ -39,6 +39,14 @@ class Base(DeclarativeBase):
     pass
 
 
+# Tables the request path cannot work without. Checked at boot by
+# :func:`require_schema`; the full set lives in the migrations, this is the
+# short list whose absence means "this database was never migrated".
+_REQUIRED_TABLES = frozenset(
+    {"alembic_version", "portal_users", "merchants", "p2p_orders", "screening_results", "lien_cases"}
+)
+
+
 class Database:
     """Manages the async SQLAlchemy engine and session factory."""
 
@@ -101,6 +109,40 @@ db = Database(_settings)
 
 async def init_db() -> None:
     await db.init()
+
+
+async def require_schema() -> str:
+    """Confirm the database has been migrated, and report which revision it is on.
+
+    The app used to call ``Base.metadata.create_all`` at boot. On a real server
+    that is the wrong tool twice over: it silently creates tables Alembic does
+    not know about (so the next ``upgrade`` fails on a table that already exists),
+    and it lets a deployment run on a schema that drifted from the migration
+    history without anyone noticing. Production schema changes belong in
+    revisions, applied deliberately.
+
+    Returns the applied revision, or raises with the command to run.
+    """
+    from sqlalchemy import text  # noqa: PLC0415 - keeps the module's import list flat
+
+    async with db.session() as session:
+        revision = await session.scalar(text("SELECT version_num FROM alembic_version LIMIT 1"))
+        tables = {
+            row[0]
+            for row in await session.execute(
+                text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
+            )
+        }
+
+    missing = sorted(_REQUIRED_TABLES - tables)
+    if missing or not revision:
+        detail = f" (missing tables: {', '.join(missing)})" if missing else " (no alembic_version row)"
+        raise RuntimeError(
+            f"database schema is not migrated{detail}. "
+            "Run: python -m src.scripts.migrate upgrade head"
+        )
+    logger.info("Database schema at Alembic revision %s", revision)
+    return str(revision)
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:

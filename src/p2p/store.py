@@ -155,8 +155,24 @@ async def _upsert_counterparty(session, model, order: P2POrder, decision: GuardD
     existing.last_seen_at = _naive_utc(datetime.now(UTC))
 
 
-async def save_voucher(voucher: dict) -> None:
+def _naive_record(record: dict) -> dict:
+    """Normalise every datetime in a record on its way into a ``timestamp`` column.
+
+    ``settlement.build_voucher`` and the compliance writers hand back aware
+    datetimes (``datetime.now(UTC) + timedelta``), and asyncpg refuses to bind an
+    aware value to ``timestamp without time zone``. SQLite silently stored the
+    string, so on PostgreSQL ``save_voucher`` raised, was caught by the broad
+    ``except`` below each saver, and logged a warning — quarantine vouchers were
+    never written and nothing failed loudly. Normalising the whole record, rather
+    than the keys anyone remembered, is what keeps the next field from repeating
+    it.
+    """
+    return {key: (_naive_utc(value) if isinstance(value, datetime) else value) for key, value in record.items()}
+
+
+async def save_voucher(raw: dict) -> None:
     """Insert or refresh the voucher for an order (one voucher per order)."""
+    voucher = _naive_record(raw)
     try:
         from sqlalchemy import select
 
@@ -180,7 +196,7 @@ async def save_voucher(voucher: dict) -> None:
         logger.warning("save_voucher failed", exc_info=True)
 
 
-async def save_lien(case: dict) -> None:
+async def save_lien(raw: dict) -> None:
     """Insert or refresh a freeze case.
 
     ``case_ref`` is derived from the notice's own identifiers, so the same bank
@@ -188,6 +204,7 @@ async def save_lien(case: dict) -> None:
     not silently fail a UNIQUE constraint and leave the caller holding a case
     reference that was never written.
     """
+    case = _naive_record(raw)
     try:
         from sqlalchemy import select
 
@@ -209,7 +226,8 @@ async def save_lien(case: dict) -> None:
         logger.warning("save_lien failed", exc_info=True)
 
 
-async def save_compliance(event: dict) -> None:
+async def save_compliance(raw: dict) -> None:
+    event = _naive_record(raw)
     try:
         from src.core.db import session_factory
         from src.core.models import ComplianceEvent

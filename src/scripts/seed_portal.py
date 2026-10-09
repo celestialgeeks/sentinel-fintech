@@ -53,7 +53,7 @@ from src.gateway.schemas import (
 from src.p2p import lien as lien_intake
 from src.p2p.pipeline import guard_order
 from src.p2p.schemas import LienNotice
-from src.portal.security import hash_password
+from src.portal import supabase
 
 logger = logging.getLogger("seed_portal")
 
@@ -190,11 +190,30 @@ def _scenario(count: int, merchant_id: str) -> list[tuple[P2POrder, GuardPhase]]
     return plan
 
 
+async def _auth_subject(email: str) -> str:
+    """The GoTrue id for the demo address, creating it if needed.
+
+    Seeding wipes local rows but cannot wipe Supabase, so re-seeding almost always
+    meets an email that is already registered. Finding the existing subject rather
+    than failing keeps ``--reset-seed`` repeatable.
+    """
+    try:
+        state = await supabase.create_verified_user(email, DEMO_PASSWORD, name="Demo Merchant")
+        return state.user_id
+    except supabase.SupabaseAuthError as exc:
+        if exc.status_code != 409:
+            raise
+    existing = await supabase.find_user(email)
+    if existing is None:
+        raise RuntimeError(f"Supabase reports {email} as registered but does not list it")
+    return str(existing["id"])
+
+
 async def _ensure_user(session, email: str, merchant_id: str) -> PortalUser:
     user = (await session.execute(select(PortalUser).where(PortalUser.email == email))).scalar_one_or_none()
     if user is not None:
         return user
-    user = PortalUser(email=email, password_hash=hash_password(DEMO_PASSWORD), name="Demo Merchant")
+    user = PortalUser(auth_user_id=await _auth_subject(email), email=email, name="Demo Merchant")
     session.add(user)
     await session.flush()
     session.add(

@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.middleware.hmac_auth import HmacAuthMiddleware
 from src.core.cache import redis_client
-from src.core.db import engine, init_db
+from src.core.db import engine, require_schema
 from src.core.kafka_client import kafka_consumer
 from src.decision.router import router as decision_router
 from src.fraud.router import router as fraud_router
@@ -36,10 +36,9 @@ logger = logging.getLogger(__name__)
 
 
 async def _startup() -> None:
-    """Run startup tasks: DB migrations, cache warm-up, Kafka consumer bootstrap."""
-    logger.info("Sentinel starting up — running database initialisation")
-    await init_db()
-    logger.info("Database initialised")
+    """Run startup tasks: DB migration check, cache warm-up, Kafka consumer bootstrap."""
+    logger.info("Sentinel starting up — verifying database schema")
+    await require_schema()
 
     logger.info("Connecting to Redis")
     await redis_client.ping()
