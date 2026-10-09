@@ -14,7 +14,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Select, func, or_, select
+from sqlalchemy import Select, cast, func, or_, select
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.models import ApiKey, Merchant, P2POrderRecord, SettlementVoucher
@@ -87,8 +88,13 @@ class Filters:
         if self.risk_max is not None:
             conds.append(P2POrderRecord.risk_score <= self.risk_max)
         if self.hard_rule:
-            # hard_rules is a JSON array; LIKE is the only portable containment test.
-            conds.append(P2POrderRecord.hard_rules.like(f'%"{self.hard_rule}"%'))
+            # Array containment, not a quoted LIKE. hard_rules is a JSON array, and
+            # the old ``LIKE '%"rule"%'`` only ever worked because SQLite stores JSON
+            # as text and silently allowed ``~~`` on it; on PostgreSQL it raises
+            # "operator does not exist: json ~~ character varying". Casting to JSONB
+            # and using @> is both valid and exact — it can no longer match a rule
+            # name that merely appears inside another rule's string.
+            conds.append(cast(P2POrderRecord.hard_rules, JSONB).contains([self.hard_rule]))
         if self.degraded is not None:
             conds.append(P2POrderRecord.degraded.is_(bool(self.degraded)))
         if self.has_utr is not None:

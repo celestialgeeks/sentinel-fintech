@@ -28,10 +28,13 @@ from every listing endpoint afterwards.
 
 from __future__ import annotations
 
+import asyncio
 import time
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
+from urllib.parse import quote
+from weakref import WeakKeyDictionary
 
 import httpx
 import jwt
@@ -108,24 +111,100 @@ def _require_configured() -> SupabaseSettings:
     return settings
 
 
+# ─── HTTP ─────────────────────────────────────────────────────────────────────
+
+# One client for the process, so connections are pooled and kept alive. Building
+# an ``AsyncClient`` per request means a fresh TCP+TLS handshake to the project's
+# region on every single call: measured on this project, that turned a 40-second
+# test run into a 35-minute one and made cold-start read timeouts common enough to
+# fail a merchant's signup.
+_RETRIES = 2
+_TRANSIENT = (
+    httpx.ConnectError,
+    httpx.ConnectTimeout,
+    httpx.ReadTimeout,
+    httpx.WriteTimeout,
+    httpx.PoolTimeout,
+    httpx.RemoteProtocolError,
+)
+
+# A pooled client belongs to the event loop that opened it, so it is keyed by loop
+# rather than held in one global: pytest-asyncio gives every test its own loop, and
+# reusing a client across loops fails with "Event loop is closed". A weak key lets
+# the client (and its sockets) go away with the loop that owned it.
+_clients: WeakKeyDictionary[asyncio.AbstractEventLoop, httpx.AsyncClient] = WeakKeyDictionary()
+
+
+def _http() -> httpx.AsyncClient:
+    """The pooled client for the running loop, created on first use."""
+    timeout = get_supabase_settings().supabase_timeout_seconds
+    loop = asyncio.get_running_loop()
+    client = _clients.get(loop)
+    if client is None or client.is_closed:
+        client = httpx.AsyncClient(
+            timeout=httpx.Timeout(timeout, connect=max(10.0, timeout)),
+            limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
+        )
+        _clients[loop] = client
+    return client
+
+
+async def close_client() -> None:
+    """Release the running loop's pooled connections (app shutdown, test teardown)."""
+    client = _clients.pop(asyncio.get_running_loop(), None)
+    if client is not None and not client.is_closed:
+        await client.aclose()
+
+
+async def _request(
+    method: str, url: str, *, headers: dict[str, str], body: dict[str, Any] | None = None
+) -> httpx.Response:
+    """Call GoTrue, retrying transport failures with a short backoff.
+
+    Only connection-level faults are retried — a 401 is never re-attempted, so a
+    wrong password cannot be turned into a slow denial of service on ourselves.
+    The exception *type* is reported because ``httpx.ReadTimeout`` has an empty
+    message, which previously surfaced as "cannot reach the auth server:" with
+    nothing after the colon.
+    """
+    last: Exception | None = None
+    for attempt in range(_RETRIES + 1):
+        try:
+            return await _http().request(method, url, headers=headers, json=body)
+        except _TRANSIENT as exc:
+            last = exc
+            if attempt < _RETRIES:
+                await asyncio.sleep(0.4 * (2**attempt))
+    raise SupabaseAuthError(f"cannot reach the auth server: {type(last).__name__}", status_code=503)
+
+
+def _anon_headers(settings: SupabaseSettings) -> dict[str, str]:
+    return {"apikey": settings.supabase_anon_key, "Content-Type": "application/json"}
+
+
+def _admin_headers(settings: SupabaseSettings) -> dict[str, str]:
+    key = settings.supabase_service_role_key
+    return {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+
+
 # ─── Token verification ───────────────────────────────────────────────────────
 
 # url -> (fetched_at, {kid: jwk}). One dict per project; a refresh replaces it whole.
 _jwks_cache: dict[str, tuple[float, dict[str, dict[str, Any]]]] = {}
 
 
-async def _fetch_jwks(client: httpx.AsyncClient, url: str, *, force: bool = False) -> dict[str, dict[str, Any]]:
+async def _fetch_jwks(url: str, *, force: bool = False) -> dict[str, dict[str, Any]]:
     """Return the project's ``kid -> JWK`` map, cached for :data:`_JWKS_TTL_SECONDS`."""
     cached = _jwks_cache.get(url)
     if not force and cached and (time.monotonic() - cached[0]) < _JWKS_TTL_SECONDS:
         return cached[1]
 
+    response = await _request("GET", url, headers={})  # the JWKS endpoint is public
     try:
-        response = await client.get(url)
         response.raise_for_status()
         keys = response.json().get("keys", [])
     except (httpx.HTTPError, ValueError) as exc:
-        raise SupabaseAuthError(f"cannot reach the auth server to verify the token: {exc}", status_code=503) from exc
+        raise SupabaseAuthError(f"cannot read the auth server's keys: {exc}", status_code=503) from exc
 
     by_kid = {k["kid"]: k for k in keys if isinstance(k, dict) and k.get("kid")}
     if not by_kid:
@@ -169,28 +248,27 @@ async def verify_access_token(token: str) -> dict[str, Any]:
     if not kid or not alg:
         raise SupabaseAuthError("token is missing its key identifier", status_code=401)
 
-    async with httpx.AsyncClient(timeout=settings.supabase_timeout_seconds) as client:
-        by_kid = await _fetch_jwks(client, settings.jwks_url)
-        try:
-            key = _key_for(by_kid, kid, alg)
-        except SupabaseAuthError:
-            # Supabase can rotate a signing key at any time; an unknown kid is
-            # refreshed for once before being rejected, so rotation is not an
-            # outage for already-issued sessions.
-            by_kid = await _fetch_jwks(client, settings.jwks_url, force=True)
-            key = _key_for(by_kid, kid, alg)
+    by_kid = await _fetch_jwks(settings.jwks_url)
+    try:
+        key = _key_for(by_kid, kid, alg)
+    except SupabaseAuthError:
+        # Supabase can rotate a signing key at any time; an unknown kid is
+        # refreshed for once before being rejected, so rotation is not an
+        # outage for already-issued sessions.
+        by_kid = await _fetch_jwks(settings.jwks_url, force=True)
+        key = _key_for(by_kid, kid, alg)
 
-        try:
-            claims = jwt.decode(
-                token,
-                key,
-                algorithms=[alg],
-                audience=settings.supabase_jwt_audience,
-                issuer=settings.jwt_issuer,
-                options={"require": ["exp", "iat", "aud", "iss", "sub"]},
-            )
-        except jwt.PyJWTError as exc:
-            raise SupabaseAuthError("token is not valid", status_code=401) from exc
+    try:
+        claims = jwt.decode(
+            token,
+            key,
+            algorithms=[alg],
+            audience=settings.supabase_jwt_audience,
+            issuer=settings.jwt_issuer,
+            options={"require": ["exp", "iat", "aud", "iss", "sub"]},
+        )
+    except jwt.PyJWTError as exc:
+        raise SupabaseAuthError("token is not valid", status_code=401) from exc
 
     if claims.get("role") != settings.supabase_jwt_audience:
         raise SupabaseAuthError("token is not a user session", status_code=401)
@@ -226,18 +304,9 @@ def _session(payload: dict[str, Any]) -> Session:
 
 
 async def _post(settings: SupabaseSettings, path: str, body: dict[str, Any], *, admin: bool = False) -> Any:
-    key = settings.supabase_service_role_key if admin else settings.supabase_anon_key
-    headers = {
-        "apikey": key,
-        "Authorization": f"Bearer {key}",
-        "Content-Type": "application/json",
-    }
+    headers = _admin_headers(settings) if admin else _anon_headers(settings)
     url = f"{settings.supabase_url.rstrip('/')}/auth/v1{path}"
-    try:
-        async with httpx.AsyncClient(timeout=settings.supabase_timeout_seconds) as client:
-            response = await client.post(url, headers=headers, json=body)
-    except httpx.HTTPError as exc:
-        raise SupabaseAuthError(f"cannot reach the auth server: {exc}", status_code=503) from exc
+    response = await _request("POST", url, headers=headers, body=body)
 
     if response.status_code >= 400:
         raise _gotrue_error(response)
@@ -266,7 +335,8 @@ def _gotrue_error(response: httpx.Response) -> SupabaseAuthError:
         return SupabaseAuthError("email or password is incorrect", status_code=401)
     if code in {"refresh_token_not_found", "refresh_token_already_used"}:
         return SupabaseAuthError("this session can no longer be refreshed", status_code=401)
-    if code in {"user_already_exists", "email_exists"} or "already registered" in message or "already been registered" in message:
+    exists = code in {"user_already_exists", "email_exists"} or "already registered" in message
+    if exists or "already been registered" in message:
         return SupabaseAuthError("an account for that email already exists", status_code=409)
     if code == "weak_password" or "password should be at least" in message:
         return SupabaseAuthError("that password is not strong enough", status_code=422)
@@ -329,29 +399,35 @@ async def delete_user(user_id: str) -> None:
     """Remove a GoTrue user. Used by the seeder and the test harness to clean up."""
     settings = _require_configured()
     url = f"{settings.supabase_url.rstrip('/')}/auth/v1/admin/users/{user_id}"
-    headers = {
-        "apikey": settings.supabase_service_role_key,
-        "Authorization": f"Bearer {settings.supabase_service_role_key}",
-    }
-    try:
-        async with httpx.AsyncClient(timeout=settings.supabase_timeout_seconds) as client:
-            response = await client.delete(url, headers=headers)
-    except httpx.HTTPError as exc:
-        raise SupabaseAuthError(f"cannot reach the auth server: {exc}", status_code=503) from exc
+    response = await _request("DELETE", url, headers=_admin_headers(settings))
     if response.status_code not in {200, 204, 404}:
         raise SupabaseAuthError("the auth server could not delete this user", status_code=502)
+
+
+async def find_user(email: str) -> dict[str, Any] | None:
+    """Look up one address by email, or ``None``.
+
+    Filtered server-side rather than paging through everyone: the seeder and the
+    test harness call this per signup, and a full listing there is both slower and
+    stale the moment a user is created mid-run.
+    """
+    settings = _require_configured()
+    url = f"{settings.supabase_url.rstrip('/')}/auth/v1/admin/users?per_page=10&filter={quote(email)}"
+    response = await _request("GET", url, headers=_admin_headers(settings))
+    if response.status_code >= 400:
+        raise _gotrue_error(response)
+    wanted = email.strip().lower()
+    for user in response.json().get("users", []):
+        if (user.get("email") or "").strip().lower() == wanted:
+            return user
+    return None
 
 
 async def list_users(*, per_page: int = 1000) -> list[dict[str, Any]]:
     """Admin user listing, for the test harness and support tooling."""
     settings = _require_configured()
     url = f"{settings.supabase_url.rstrip('/')}/auth/v1/admin/users?page=1&per_page={per_page}"
-    headers = {
-        "apikey": settings.supabase_service_role_key,
-        "Authorization": f"Bearer {settings.supabase_service_role_key}",
-    }
-    async with httpx.AsyncClient(timeout=settings.supabase_timeout_seconds) as client:
-        response = await client.get(url, headers=headers)
+    response = await _request("GET", url, headers=_admin_headers(settings))
     if response.status_code >= 400:
         raise _gotrue_error(response)
     payload = response.json()
@@ -359,18 +435,14 @@ async def list_users(*, per_page: int = 1000) -> list[dict[str, Any]]:
 
 
 async def sign_out(access_token: str) -> None:
-    """Revoke the caller's session server-side. A no-op if GoTrue is unreachable."""
+    """Revoke the caller's session server-side."""
     settings = _require_configured()
     url = f"{settings.supabase_url.rstrip('/')}/auth/v1/logout"
-    headers = {
-        "apikey": settings.supabase_anon_key,
-        "Authorization": f"Bearer {access_token}",
-    }
-    try:
-        async with httpx.AsyncClient(timeout=settings.supabase_timeout_seconds) as client:
-            await client.post(url, headers=headers)
-    except httpx.HTTPError as exc:
-        raise SupabaseAuthError(f"cannot reach the auth server: {exc}", status_code=503) from exc
+    headers = {"apikey": settings.supabase_anon_key, "Authorization": f"Bearer {access_token}"}
+    response = await _request("POST", url, headers=headers)
+    # A session that is already gone is a successful logout, not an error.
+    if response.status_code >= 400 and response.status_code != 401:
+        raise _gotrue_error(response)
 
 
 def reset_jwks_cache() -> None:

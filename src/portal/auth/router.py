@@ -15,11 +15,18 @@ row the portal later displays is partitioned by that string.
 Because the remote half cannot join the local transaction, a failed workspace
 insert rolls the GoTrue user back too. Leaving an orphaned auth user behind would
 burn that email address permanently with no way to sign in.
+
+``/auth/link`` is the Google-shaped exception: nothing is minted there, because
+Supabase already created the identity before the browser was redirected back. It
+only maps that identity onto a workspace — see the endpoint for why the match is
+made on the token subject and never on the email claim.
 """
 
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import HTTPAuthorizationCredentials
@@ -43,8 +50,9 @@ from src.portal.schemas import (
     AuthResponse,
     CreateMerchantRequest,
     LoginRequest,
-    MeResponse,
     MerchantRef,
+    MeResponse,
+    OAuthLinkRequest,
     RefreshRequest,
     SignupRequest,
     UserInfo,
@@ -82,6 +90,18 @@ async def _merchant_refs(session: AsyncSession, keys: tuple[str, ...], roles: di
 
 def _user_info(user: PortalUser) -> UserInfo:
     return UserInfo(user_id=user.id, email=user.email, name=user.name)
+
+
+def _display_name(claims: dict[str, Any]) -> str | None:
+    """The name Supabase copied off the identity provider's profile, if it sent one.
+
+    Read from ``user_metadata``, which Supabase populates from Google's account
+    details. Only ever used when creating a local row: a merchant who already has
+    one chose their own name, and a provider profile does not get to rewrite it.
+    """
+    meta = claims.get("user_metadata") or {}
+    name = meta.get("full_name") or meta.get("name")
+    return str(name).strip()[:256] if name else None
 
 
 async def _auth_response(session: AsyncSession, user: PortalUser, state: Session) -> AuthResponse:
@@ -191,6 +211,125 @@ async def login(req: LoginRequest, session: AsyncSession = Depends(get_session))
 
     user.last_login_at = datetime.now(UTC).replace(tzinfo=None)
     return await _auth_response(session, user, state)
+
+
+@router.post("/link", response_model=MeResponse)
+async def link_oauth_identity(
+    req: OAuthLinkRequest,
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
+    session: AsyncSession = Depends(get_session),
+) -> MeResponse:
+    """Give a Google-signed merchant the workspace half of an account.
+
+    Supabase proves *who* someone is; it says nothing about which ledger rows they
+    may read. Those live here, so the first Google return has to either find the
+    caller's portal account or open one. Both halves of that decision are made
+    against ``sub``, never against the email claim:
+
+    * A merchant who already signed up with email + password keeps their history,
+      because GoTrue links a Google identity onto the confirmed user it already has
+      and reissues the *same* subject — so ``auth_user_id`` matches directly.
+    * A brand-new merchant gets a desk, the way signup creates one.
+
+    Matching on email instead would let anyone register a Google address that
+    duplicates a merchant's and be handed that merchant's ledger, so a subject that
+    collides with a *different* account's subject is refused, not merged.
+
+    Idempotent by design: the frontend calls this on every Google return, and a
+    second call must not create a second workspace.
+    """
+    if credentials is None or not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="missing bearer token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    try:
+        claims = await supabase.verify_access_token(credentials.credentials)
+    except SupabaseAuthError as exc:
+        raise _http_error(exc) from exc
+
+    subject = str(claims.get("sub") or "")
+    try:
+        # Same guard as deps.get_current_user: a malformed subject must be a 401,
+        # not a type error from the Uuid column surfacing as a 500.
+        UUID(subject)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="token subject is not a user id",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+    email = _normalise(str(claims.get("email") or ""))
+    if not email:
+        raise HTTPException(status_code=401, detail="the signed-in identity carries no email")
+
+    user = (
+        await session.execute(select(PortalUser).where(PortalUser.auth_user_id == subject))
+    ).scalar_one_or_none()
+    if user is None:
+        claimed = (await session.execute(select(PortalUser).where(PortalUser.email == email))).scalar_one_or_none()
+        if claimed is not None:
+            # GoTrue chose not to fold this identity into the existing user, which
+            # is its own judgement that the address is not proven to belong to the
+            # caller. Merging it here would override that decision.
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="an account for this email already exists — sign in with your password to link Google",
+            )
+        user = PortalUser(auth_user_id=subject, email=email, name=_display_name(claims))
+        session.add(user)
+        try:
+            await session.flush()
+        except IntegrityError as exc:  # raced another Google return on the same subject
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="an account for this email already exists"
+            ) from exc
+
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="account disabled")
+
+    # Signup can be answered with no name at all; a Google profile usually has one.
+    # Filling the gap only ever writes the local copy, never the provider's.
+    user.name = user.name or _display_name(claims)
+
+    rows = (
+        await session.execute(select(MerchantMembership).where(MerchantMembership.user_id == user.id))
+    ).scalars().all()
+    keys = tuple(sorted({row.merchant_key for row in rows}))
+    roles = {row.merchant_key: (row.role or "owner") for row in rows}
+    if not keys:
+        key = (req.merchant_key or "").strip() or f"merch_{subject[:6]}"
+        clash = (await session.execute(select(Merchant).where(Merchant.merchant_key == key))).scalar_one_or_none()
+        if clash is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"merchant key '{key}' is already in use",
+            )
+        session.add(
+            Merchant(
+                business_name=req.business_name or "My P2P desk",
+                merchant_key=key,
+                country=req.country.upper(),
+                status=MerchantStatusEnum.APPROVED,
+                kyb_status=KYBStatusEnum.NOT_STARTED,
+                kyc_status=KYCStatusEnum.NOT_STARTED,
+            )
+        )
+        session.add(MerchantMembership(user_id=user.id, merchant_key=key, role="owner"))
+        try:
+            await session.flush()
+        except IntegrityError as exc:
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"merchant key '{key}' is already in use",
+            ) from exc
+        keys, roles = (key,), {key: "owner"}
+
+    user.last_login_at = datetime.now(UTC).replace(tzinfo=None)
+    return MeResponse(user=_user_info(user), merchants=await _merchant_refs(session, keys, roles))
 
 
 @router.get("/me", response_model=MeResponse)

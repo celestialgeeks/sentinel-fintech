@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from src.portal.security import encode_jwt
+import time
+
+import jwt
+
+from src.portal import supabase
 from tests.test_portal.conftest import PASSWORD, auth, call_gate, order_payload, signup
 
 
@@ -59,10 +63,58 @@ class TestSignupAndLogin:
         result = await client.get("/api/v1/auth/me", headers=auth(forged))
         assert result.status_code == 401
 
-    async def test_another_secret_cannot_mint_a_session(self, client):
+    async def test_a_token_signed_with_another_key_cannot_mint_a_session(self, client):
+        """Only this project's published signing key is trusted.
 
+        Supabase signs with ES256 and publishes the public half at its JWKS
+        endpoint, so a token forged against a guessed secret has to fail — and the
+        legacy HS256 path must not be reachable even by a caller who copies a real
+        ``kid`` header, which is exactly the algorithm-confusion trick the old
+        local-JWT verifier had to guard against by hand.
+        """
+        workspace = await signup(client)
+        kid = jwt.get_unverified_header(workspace["token"])["kid"]
+        settings = supabase.get_supabase_settings()
+        now = int(time.time())
+        claims = {
+            "sub": "11111111-1111-1111-1111-111111111111",
+            "aud": settings.supabase_jwt_audience,
+            "iss": settings.jwt_issuer,
+            "role": "authenticated",
+            "iat": now,
+            "exp": now + 3600,
+        }
+        forged = [
+            jwt.encode(claims, "not-the-server-secret-not-the-key-at-all", algorithm="HS256"),
+            jwt.encode(
+                claims, "not-the-server-secret-not-the-key-at-all", algorithm="HS256", headers={"kid": kid}
+            ),
+        ]
+        for token in forged:
+            result = await client.get("/api/v1/auth/me", headers=auth(token))
+            assert result.status_code == 401
+
+    async def test_a_service_role_token_is_not_a_merchant_session(self, client):
+        """``role`` is checked, so an API key cannot read a merchant's ledger.
+
+        The service-role key and a user session are both valid JWTs for the same
+        project; only one of them belongs to a person.
+        """
         await signup(client)
-        forged = encode_jwt({"sub": 1, "typ": "sessions"}, "not-the-server-secret")
+        settings = supabase.get_supabase_settings()
+        now = int(time.time())
+        forged = jwt.encode(
+            {
+                "sub": "11111111-1111-1111-1111-111111111111",
+                "aud": settings.supabase_jwt_audience,
+                "iss": settings.jwt_issuer,
+                "role": "service_role",
+                "iat": now,
+                "exp": now + 3600,
+            },
+            "not-the-server-secret-not-the-key-at-all",
+            algorithm="HS256",
+        )
         result = await client.get("/api/v1/auth/me", headers=auth(forged))
         assert result.status_code == 401
 

@@ -1,4 +1,7 @@
 """Session and workspace models: signup, login, ``/auth/me``, merchant creation.
+
+``OAuthLinkRequest`` is the odd one out: it carries no credential, because
+Supabase already vouched for the caller before this request was made.
 """
 
 
@@ -44,6 +47,25 @@ class SignupRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+
+class OAuthLinkRequest(BaseModel):
+    """First-run details for an identity that arrived through Google.
+
+    A Google sign-in authenticates the *person* at Supabase but says nothing about
+    which merchant desk they own, so the portal asks for the same two facts the
+    signup form collects. Everything is optional: omitting ``business_name`` yields
+    the same placeholder signup uses, and omitting ``merchant_key`` yields a
+    generated one.
+    """
+
+    business_name: str | None = Field(None, min_length=2, max_length=256)
+    country: str = Field("IN", min_length=2, max_length=2)
+    merchant_key: str | None = Field(
+        None,
+        max_length=64,
+        description="The merchant_id your bot already sends. Generated when omitted.",
+    )
 
 
 class RefreshRequest(BaseModel):
