@@ -36,24 +36,44 @@ logger = logging.getLogger(__name__)
 
 
 async def _startup() -> None:
-    """Run startup tasks: DB migration check, cache warm-up, Kafka consumer bootstrap."""
+    """Run startup tasks: DB migration check, cache warm-up, Kafka consumer bootstrap.
+
+    Only the schema is a hard dependency. Redis and Kafka are accelerators that a
+    hosted deployment may not have: the guard keeps its order state in-process
+    (``src/p2p/state.py``), the trail cache logs and misses
+    (``src/gateway/trail_cache.py``), and ``kafka_client`` degrades to ``None``
+    without the broker library installed. Failing the boot on those turns a
+    working portal into a crash loop, so each is a warning instead.
+    """
     logger.info("Sentinel starting up — verifying database schema")
     await require_schema()
 
     logger.info("Connecting to Redis")
-    await redis_client.ping()
-    logger.info("Redis connection established")
+    try:
+        # connect() builds the client; ping() on the singleton before that is an
+        # AttributeError on None, not a connection error.
+        await redis_client.connect()
+        logger.info("Redis connection established")
+    except Exception as exc:
+        logger.warning("Redis unavailable (%s) — continuing without the shared cache", exc)
 
-    logger.info("Starting Kafka consumer")
-    kafka_consumer.start()
-    setup_consumer()
-    logger.info("Kafka consumer started")
+    if kafka_consumer is None:
+        logger.warning("confluent-kafka not installed — event streams disabled")
+    else:
+        try:
+            logger.info("Starting Kafka consumer")
+            kafka_consumer.start()
+            setup_consumer()
+            logger.info("Kafka consumer started")
+        except Exception as exc:
+            logger.warning("Kafka unavailable (%s) — event streams disabled", exc)
 
 
 async def _shutdown() -> None:
     """Clean up on shutdown: close DB pool, stop Kafka consumer."""
-    logger.info("Shutting down Kafka consumer")
-    kafka_consumer.stop()
+    if kafka_consumer is not None:
+        logger.info("Shutting down Kafka consumer")
+        kafka_consumer.stop()
 
     logger.info("Closing Redis connection")
     await redis_client.aclose()

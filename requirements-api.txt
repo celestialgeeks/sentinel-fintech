@@ -1,0 +1,50 @@
+# ─── Sentinel API — deployment dependency set ────────────────────────────────
+# What the ASGI app actually imports at boot, and nothing else.
+#
+# ``requirements.txt`` is the *full research stack* for ``docker compose`` (Milvus,
+# Neo4j, Kafka, torch, transformers, Playwright). Installing that in a cloud
+# container buys 3 GB of weights that every call site already guards with
+# ``try/except ImportError``: ``src/fraud/model.py`` falls back to a rule scorer,
+# ``src/screening/embeddings.py`` to hashing, ``src/core/graph_db.py`` and
+# ``src/core/vector_db.py`` to no-ops. A hosted API that boots in seconds and
+# fits a small instance is the point of this file.
+#
+# Deliberately absent, with the reason:
+#   tesseract-client   pinned to 3.0.0 upstream, which has never been published
+#                      (PyPI max is 0.0.8) — the install fails, and the package is
+#                      a file-hosting client, not OCR. It also pins
+#                      cryptography==41.0.7, conflicting with the line below.
+#   confluent-kafka    needs librdkafka headers; the app treats its absence as
+#                      "event streams disabled" (see src/core/kafka_client.py).
+#                      Add it back with a Kafka broker, not before.
+#   pymilvus / neo4j   optional; no hosted broker to talk to.
+#   torch / transformers / sentence-transformers / xgboost / scikit-learn /
+#   langchain* / playwright / pymupdf / python-docx / pillow / locust / pytest*
+#                      research, training, or CI tools — not request-path code.
+#
+# Deployed by ``Dockerfile.render`` (Render). Keep in sync when a router gains a
+# new top-level import; check with:
+#   grep -rhoE "^(import|from) [a-zA-Z0-9_]+" src --include=*.py | sort -u
+
+# ─── Web framework ───────────────────────────────────────────────────────────
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.8.2
+pydantic-settings==2.4.0
+
+# ─── Database (Supabase Postgres over the session pooler) ────────────────────
+sqlalchemy[asyncio]==2.0.35
+asyncpg==0.29.0
+alembic==1.13.3
+
+# ─── Auth: Supabase-issued ES256 access tokens, verified against JWKS ────────
+PyJWT[crypto]==2.15.0
+cryptography==50.0.1
+
+# ─── Outbound calls (GoTrue admin API, vendor providers, sanctions feed) ─────
+httpx==0.27.2
+
+# ─── Accelerators (both optional at runtime, listed because the code imports
+#     them at module scope: src/core/cache.py, src/gateway/trail_cache.py) ─────
+redis==5.0.8
+prometheus-client==0.21.0

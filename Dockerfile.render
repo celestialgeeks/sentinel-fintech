@@ -1,0 +1,51 @@
+# ─── Sentinel API — Render / hosted deployment image ─────────────────────────
+# Separate from ./Dockerfile on purpose. That one is the `docker compose` research
+# image (full requirements.txt, Milvus/Neo4j/Kafka reachable by service name, port
+# 8000). This one is the request path only: slim deps, migrations shipped with the
+# code, and a port bound from $PORT because Render forwards to it (default 10000)
+# rather than to whatever the Dockerfile happens to expose.
+#
+# Render: set Language = Docker, Dockerfile Path = Dockerfile.render.
+#
+#   docker build -f Dockerfile.render -t sentinel-api .
+#   docker run --rm -p 10000:10000 --env-file .env sentinel-api
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# asyncpg, SQLAlchemy and Alembic are pure-wheel installs; gcc/g++ from the
+# research image are only needed to build torch and the Kafka broker client,
+# neither of which is in the deployment dependency set.
+
+COPY requirements-api.txt ./requirements.txt
+RUN pip install -r requirements.txt
+
+# Application code. `alembic/` travels with `alembic.ini`: without the revision
+# scripts, `python -m src.scripts.migrate upgrade head` cannot run here, and the
+# app's boot guard (src/core/db.py:require_schema) then refuses to start the
+# service with "database schema is not migrated".
+COPY src ./src
+COPY config ./config
+COPY alembic.ini ./alembic.ini
+COPY alembic ./alembic
+
+# Never run the API as root.
+RUN groupadd -r sentinel && useradd -r -g sentinel -d /app sentinel \
+    && chown -R sentinel:sentinel /app
+USER sentinel
+
+# Render injects PORT (default 10000); the default keeps local `docker run` honest.
+ENV PORT=10000
+EXPOSE 10000
+
+# Migrate, then serve. Render's Pre-deploy command is a paid-plan feature, so the
+# migration belongs in the start command for a free/starter service: it runs on
+# the same instance that then serves traffic, and a failing migration fails the
+# deploy instead of booting a service against a drifted schema.
+CMD ["/bin/sh", "-c", "python -m src.scripts.migrate upgrade head && exec uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-10000}"]

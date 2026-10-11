@@ -48,7 +48,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     cmd = sys.argv[1]
-    rev = sys.argv[2] if len(sys.argv) > 2 else "head"
 
     dispatch = {
         "upgrade": run_upgrade,
@@ -60,4 +59,11 @@ if __name__ == "__main__":
     if cmd not in dispatch:
         print(f"Unknown command: {cmd}. Available: {list(dispatch.keys())}")
         sys.exit(1)
-    dispatch[cmd](rev)
+
+    # `current` and `check` inspect the database and take no revision. Passing the
+    # default "head" to them was a TypeError, so the read-only commands that an
+    # operator reaches for first (what revision is this box on?) could not run.
+    if cmd in {"current", "check"}:
+        dispatch[cmd]()
+    else:
+        dispatch[cmd](sys.argv[2] if len(sys.argv) > 2 else "head")

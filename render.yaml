@@ -1,0 +1,126 @@
+# ─── Sentinel — Render Blueprint ─────────────────────────────────────────────
+# Infrastructure as code for the hosted API. Create once in the Render dashboard
+# (New → Blueprint → connect celestialgeeks/sentinel-fintech); every later push to
+# the branch below re-syncs this file, so the service definition stops drifting
+# from the repo.
+#
+# Spec: https://render.com/docs/blueprint-spec
+#
+# Secrets are deliberately NOT committed. The four keys marked `sync: false` are
+# prompted for once in the dashboard and then stored on the service. Their values
+# live in the repo's gitignored `.env` (and `.secrets/supabase_env_backup.txt`):
+#
+#   DATABASE_URL                  the Supabase *session pooler* string, port 5432,
+#                                 with ?ssl=require. Never db.<ref>.supabase.co —
+#                                 that endpoint is IPv6-only and unreachable from a
+#                                 Render container (see config/database.yml).
+#   SUPABASE_ANON_KEY             sb_publishable_… (browser-safe)
+#   SUPABASE_SERVICE_ROLE_KEY     server-side only; mints and deletes merchant
+#                                 accounts, so it must never reach the frontend
+#   GUARD_HMAC_SECRET             leave blank until the P2P bot signs its callbacks
+#
+# The values already known are written out: they are public by design.
+
+services:
+  # ─── The FastAPI request path ──────────────────────────────────────────────
+  - type: web
+    name: sentinel-api
+    runtime: docker
+    repo: https://github.com/celestialgeeks/sentinel-fintech.git
+    branch: main
+    # Singapore keeps the API next to the Supabase project (ap-southeast-1) and
+    # next to the Valkey instance below. A service's region cannot be changed
+    # later — it needs a new service in the target region.
+    region: singapore
+    # 0.5c-512mb runs this image with room to spare: the dependency set is the
+    # request path only (see requirements-api.txt), and the ML libraries that
+    # would need `1c-2g` are optional imports that degrade to fallbacks.
+    # Use `free` only to try it out: it sleeps after 15 idle minutes, so the
+    # first merchant of the day waits ~60s for a cold start.
+    plan: 0.5c-512mb
+    # Separate from ./Dockerfile, which is the docker compose research image
+    # (full requirements, ports 8000, no $PORT handling).
+    dockerfilePath: ./Dockerfile.render
+    # /health is mounted outside every router (src/api/main.py) and answers 200
+    # once the lifespan has run. Render uses it to gate traffic and to restart a
+    # wedged instance.
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Render's own default; pinned so the image's `--port ${PORT:-10000}` and
+      # the EXPOSE in Dockerfile.render cannot disagree.
+      - key: PORT
+        value: 10000
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+
+      # ─── Database ─────────────────────────────────────────────────────────
+      - key: DATABASE_URL
+        sync: false
+      # A Supabase free project reports max_connections=60 and reserves a chunk
+      # for its own services. 5+5 per worker leaves headroom; the previous 20+10
+      # could exhaust the pool on its own (config/database.yml).
+      - key: DATABASE_POOL_SIZE
+        value: 5
+      - key: DATABASE_MAX_OVERFLOW
+        value: 5
+
+      # ─── Supabase Auth (the credential authority for the merchant portal) ──
+      - key: SUPABASE_URL
+        value: https://xbvigeppidwemrdjspwq.supabase.co
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_ISSUER
+        value: https://xbvigeppidwemrdjspwq.supabase.co/auth/v1
+      - key: SUPABASE_JWT_AUDIENCE
+        value: authenticated
+
+      # ─── CORS: the deployed portal origin ─────────────────────────────────
+      # Wildcard `*` cannot carry credentials (src/api/main.py sets
+      # allow_credentials=False for it), so the frontend origin must be listed.
+      # Add the custom domain here when the site moves off *.vercel.app.
+      - key: CORS_ORIGINS
+        value: https://web-five-theta-px9lht1ejw.vercel.app
+
+      # ─── Guard behaviour ──────────────────────────────────────────────────
+      - key: DEMO_MODE
+        value: false
+      # Vendors without an API key fall back to deterministic mocks, which is
+      # what makes a demo possible before contracts are signed. Flip to `false`
+      # when real Chainalysis/IDfy/Elliptic keys land, so an unconfigured
+      # required provider degrades to HOLD instead of a mock verdict.
+      - key: USE_MOCKS_WHEN_UNCONFIGURED
+        value: true
+      - key: MAX_VENDOR_LATENCY_MS
+        value: 6000
+      - key: CACHE_DEFAULT_TTL
+        value: 300
+      - key: GUARD_HMAC_SECRET
+        sync: false
+
+      # Shared cache + durable guard state, wired to the Valkey instance below
+      # over Render's private network. If it is ever removed, the app boots
+      # anyway: src/p2p/state.py and src/gateway/trail_cache.py fall back to
+      # in-process caches.
+      - key: REDIS_URL
+        fromService:
+          name: sentinel-cache
+          type: keyvalue
+          property: connectionString
+
+  # ─── Vendor-response cache and cross-worker guard state ────────────────────
+  # Valkey (Redis-compatible). Free tier is 256 MB with allkeys-lru eviction,
+  # which is exactly right for a TTL cache: pressure evicts stale vendor reads
+  # rather than refusing the write.
+  - type: keyvalue
+    name: sentinel-cache
+    region: singapore
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    # Empty allow list: reachable only over the private network, which is all the
+    # API needs. No public Redis endpoint exists for anyone to attack.
+    ipAllowList: []

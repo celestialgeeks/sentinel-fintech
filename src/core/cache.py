@@ -35,8 +35,21 @@ class RedisClient:
         self._client: Optional[redis.Redis] = None
 
     async def connect(self) -> None:
-        self._client = redis.from_url(self._url, decode_responses=True)
-        await self._client.ping()
+        """Open the client and prove the broker answers before publishing it.
+
+        ``redis.from_url`` does not connect, so a ping that fails still leaves a
+        live-looking client behind. Callers use ``_client is None`` as the signal
+        to fall back to their in-process cache (``src/p2p/state.py``), so keeping
+        an unreachable client published would make every guard request pay a
+        connection timeout instead of a memory hit.
+        """
+        client = redis.from_url(self._url, decode_responses=True)
+        try:
+            await client.ping()
+        except Exception:
+            await client.aclose()
+            raise
+        self._client = client
         logger.info("Redis connected at %s", self._url)
 
     async def ping(self) -> bool:

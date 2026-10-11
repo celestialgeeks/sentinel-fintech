@@ -56,7 +56,8 @@ Thumbs.db
 logs/
 
 # ─── Docker ────────────────────────────────────────────────
-.dockerignore
+# `.dockerignore` is COMMITTED on purpose: it is what keeps .env, .secrets/, .venv/
+# and web/ out of the build context a hosted builder (Render) uploads.
 docker-compose.override.yml
 
 # ─── Tests ─────────────────────────────────────────────────
