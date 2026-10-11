@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentinel — Pillar 1: Transaction Screening Pipeline</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { min-height: 100vh; padding: var(--space-2xl); }
+    .circuit-grid { opacity: 0.08; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: var(--space-2xl); }
+    .header h1 { margin-bottom: var(--space-sm); }
+    .header p { color: var(--steel); max-width: 600px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div class="circuit-grid" aria-hidden="true"></div>
+  <div class="container">
+    <header class="header">
+      <h1>Pillar 1 — Transaction Screening Pipeline</h1>
+      <p>Real-time AML & sanctions screening with LLM entity resolution + Milvus vector fuzzy matching</p>
+    </header>
+
+    <div class="pipeline-container">
+      <div class="pipeline-stages" id="pipelineStages">
+        <div class="stage" data-stage="1"><div class="stage-node">1</div><div class="label">Ingest</div></div>
+        <div class="stage" data-stage="2"><div class="stage-node">2</div><div class="label">NER + LLM<br>Entity Resolution</div></div>
+        <div class="stage" data-stage="3"><div class="stage-node">3</div><div class="label">Vector Fuzzy<br>Match (Milvus)</div><div class="match-alert">0.94 match!</div></div>
+        <div class="stage" data-stage="4"><div class="stage-node">4</div><div class="label">AML Rule<br>Engine</div></div>
+        <div class="stage" data-stage="5"><div class="stage-node">5</div><div class="label">Hybrid<br>Decision</div></div>
+      </div>
+      <div class="transaction-flow" id="txFlow"></div>
+    </div>
+
+    <div class="counter-strip" style="margin-top: var(--space-xl);">
+      <div class="counter-item"><span class="val" id="ctrScreened">47,231</span> screened today</div>
+      <div class="counter-item"><span class="val" id="ctrHits">12</span> sanctions hits</div>
+      <div class="counter-item"><span class="val" id="ctrBlocked">891</span> false positives blocked</div>
+    </div>
+
+    <div class="grid-2" style="margin-top: var(--space-xl);">
+      <div class="panel">
+        <h3 style="margin-bottom: var(--space-sm); display: flex; align-items: center; gap: var(--space-sm);"><span class="dot"></span> LLM Entity Resolution</h3>
+        <p>LangChain-powered NER handles transliteration ("Mohammed Ahmed" ↔ "Mohammed Al-Ahmed"), corporate aliases, name variations. <strong>OpenSanctions Pairs: 98.23% F1</strong> vs 95.94% traditional.</p>
+      </div>
+      <div class="panel">
+        <h3 style="margin-bottom: var(--space-sm); display: flex; align-items: center; gap: var(--space-sm);"><span class="dot"></span> Vector Fuzzy Matching</h3>
+        <p>Milvus cosine similarity against OFAC/EU/UN lists. Embeddings via sentence-transformers. Threshold-based alerting with <strong>60% false positive reduction</strong> vs exact match.</p>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top: var(--space-xl);">
+      <h3 style="margin-bottom: var(--space-md); display: flex; align-items: center; gap: var(--space-sm);"><span class="dot"></span> Pipeline Stages Detail</h3>
+      <table class="compare-table">
+        <thead>
+          <tr><th>Stage</th><th>Component</th><th>Technology</th><th>Output</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="mono">1</span></td><td>Transaction Ingest</td><td>FastAPI + Kafka</td><td>Normalized TX object</td></tr>
+          <tr><td><span class="mono">2</span></td><td>NER + Entity Resolution</td><td>LangChain + HF Transformers</td><td>Resolved entities with aliases</td></tr>
+          <tr><td><span class="mono">3</span></td><td>Vector Fuzzy Match</td><td>Milvus + sentence-transformers</td><td>Similarity scores vs watchlists</td></tr>
+          <tr><td><span class="mono">4</span></td><td>AML Rule Engine</td><td>Stateless scoring service</td><td>Deterministic rule scores</td></tr>
+          <tr><td><span class="mono">5</span></td><td>Hybrid Decision</td><td>Rule score + ML probability</td><td>Final disposition + explainability</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Pipeline animation
+    const stages = document.querySelectorAll('#pipelineStages .stage');
+    const flow = document.getElementById('txFlow');
+    let stageIdx = 0;
+    stages[0].classList.add('active');
+
+    setInterval(() => {
+      stages[stageIdx].classList.remove('active');
+      stages[stageIdx].classList.add('complete');
+      stageIdx = (stageIdx + 1) % stages.length;
+      stages[stageIdx].classList.add('active');
+
+      flow.style.animation = 'none';
+      flow.offsetHeight;
+      flow.style.animation = 'flow-transaction 3s ease-in-out infinite';
+    }, 3000);
+
+    // Live counters
+    let screened = 47231, hits = 12, blocked = 891;
+    setInterval(() => {
+      screened += Math.floor(Math.random() * 3) + 1;
+      if (Math.random() < 0.02) hits++;
+      if (Math.random() < 0.15) blocked += Math.floor(Math.random() * 2) + 1;
+      document.getElementById('ctrScreened').textContent = screened.toLocaleString();
+      document.getElementById('ctrHits').textContent = hits;
+      document.getElementById('ctrBlocked').textContent = blocked.toLocaleString();
+    }, 2000);
+  </script>
+</body>
+</html>

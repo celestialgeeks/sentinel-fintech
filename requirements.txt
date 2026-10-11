@@ -50,10 +50,12 @@ lxml==5.3.0
 playwright==1.46.0
 
 # ─── Authentication & Security ─────────────────────────────
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-bcrypt==4.2.0
-cryptography==43.0.0
+# Supabase signs access tokens with ES256 (asymmetric) and publishes the public
+# key at /auth/v1/.well-known/jwks.json, so verification needs an ECDSA backend.
+# python-jose and passlib were dropped with the local password/session code: neither
+# was imported anywhere, and jose carries known algorithm-confusion CVEs.
+PyJWT[crypto]==2.15.0
+cryptography==50.0.1
 
 # ─── Monitoring ────────────────────────────────────────────
 prometheus-client==0.21.0

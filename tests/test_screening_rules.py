@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 from src.screening.rules import (
     AmountThresholdRule,
     HighRiskJurisdictionRule,
-    RuleEngine,
     RoundTripRule,
+    RuleEngine,
     StructuringRule,
     VelocityRule,
 )

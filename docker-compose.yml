@@ -10,7 +10,20 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://sentinel:${POSTGRES_PASSWORD:-sentinel_pass}@postgres:5432/sentinel
+      # Postgres and Auth are Supabase's, so these come from the host .env rather
+      # than from containers below. DATABASE_URL must be the session-mode pooler
+      # URL (…pooler.supabase.com:5432, user postgres.<ref>): the direct
+      # db.<ref>.supabase.co endpoint is IPv6-only and a container such as Render
+      # or this one cannot reach it.
+      - DATABASE_URL=${DATABASE_URL:?set DATABASE_URL in .env to the Supabase pooler URL}
+      - SUPABASE_URL=${SUPABASE_URL:?set SUPABASE_URL in .env}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:?set SUPABASE_ANON_KEY in .env}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:?set SUPABASE_SERVICE_ROLE_KEY in .env}
+      - SUPABASE_JWT_ISSUER=${SUPABASE_JWT_ISSUER:-}
+      - SUPABASE_JWT_AUDIENCE=${SUPABASE_JWT_AUDIENCE:-authenticated}
+      - DATABASE_POOL_SIZE=${DATABASE_POOL_SIZE:-5}
+      - DATABASE_MAX_OVERFLOW=${DATABASE_MAX_OVERFLOW:-5}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-sentinel_redis_pass}@redis:6379/0
       - MILVUS_URI=http://milvus:19530
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9093
@@ -18,12 +31,8 @@ services:
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=${NEO4J_PASSWORD:-sentinel_neo4j_pass}
-      - JWT_SECRET=${JWT_SECRET:-change-this-to-a-secure-random-string}
-      - JWT_ALGORITHM=HS256
       - ENVIRONMENT=development
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
       milvus:
@@ -39,27 +48,10 @@ services:
     networks:
       - sentinel-net
 
-  # ─── PostgreSQL ────────────────────────────────────────────
-  postgres:
-    image: postgres:16-alpine
-    container_name: sentinel-postgres
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=sentinel
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-sentinel_pass}
-      - POSTGRES_DB=sentinel
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./config/init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sentinel -d sentinel"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-    networks:
-      - sentinel-net
+  # PostgreSQL is not in this file any more: the schema lives in Supabase and is
+  # created by `python -m src.scripts.migrate upgrade head`. A second Postgres
+  # container here would be a second source of truth for the schema, which is how
+  # the migration history drifted from the models in the first place.
 
   # ─── Redis ─────────────────────────────────────────────────
   redis:
@@ -213,7 +205,6 @@ services:
 
 # ─── Volumes ─────────────────────────────────────────────────
 volumes:
-  postgres_data:
   redis_data:
   etcd_data:
   minio_data:

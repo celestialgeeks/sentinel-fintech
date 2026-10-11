@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sentinel — Pillar 3: Merchant Onboarding Kanban</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { min-height: 100vh; padding: var(--space-2xl); }
+    .circuit-grid { opacity: 0.08; }
+    .container { max-width: 1300px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: var(--space-2xl); }
+    .header h1 { margin-bottom: var(--space-sm); }
+    .header p { color: var(--steel); max-width: 600px; margin: 0 auto; }
+    .kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); }
+    .kanban-column { background: var(--bg-ink); border: 1px solid var(--border-subtle); border-radius: 12px; padding: var(--space-md); min-height: 450px; display: flex; flex-direction: column; }
+  </style>
+</head>
+<body>
+  <div class="circuit-grid" aria-hidden="true"></div>
+  <div class="container">
+    <header class="header">
+      <h1>Pillar 3 — Automated Merchant Onboarding</h1>
+      <p>KYB/KYC workflow with RAG document extraction, web scraping, dynamic risk scoring</p>
+    </header>
+
+    <div class="kanban" id="kanbanBoard">
+      <div class="kanban-column">
+        <div class="kanban-header approved"><span class="kanban-title approved">✓ AUTO-APPROVED</span><span class="kanban-count" id="cntApproved">1,247</span></div>
+        <div class="kanban-cards" id="colApproved"></div>
+      </div>
+      <div class="kanban-column">
+        <div class="kanban-header review"><span class="kanban-title review">⚠ MANUAL REVIEW</span><span class="kanban-count" id="cntReview">89</span></div>
+        <div class="kanban-cards" id="colReview"></div>
+      </div>
+      <div class="kanban-column">
+        <div class="kanban-header rejected"><span class="kanban-title rejected">✗ AUTO-REJECTED</span><span class="kanban-count" id="cntRejected">3</span></div>
+        <div class="kanban-cards" id="colRejected"></div>
+      </div>
+    </div>
+
+    <div class="kanban-ticker" style="margin-top: var(--space-lg);">
+      <div><span class="val">1,247</span> onboarded today</div>
+      <div><span class="val">89</span> in review</div>
+      <div><span class="val">3</span> rejected</div>
+      <div><span class="val">4m 12s</span> avg time</div>
+      <button class="play-btn" id="playPipeline">▶ Play Pipeline</button>
+    </div>
+
+    <div class="grid-2" style="margin-top: var(--space-xl);">
+      <div class="panel">
+        <h3 style="margin-bottom: var(--space-sm); display: flex; align-items: center; gap: var(--space-sm);"><span class="dot"></span> RAG Document Extraction</h3>
+        <p>LlamaIndex pulls structured facts from incorporation docs, tax IDs, bank statements. <strong>3/4 checkmarks</strong> = auto-approve threshold.</p>
+      </div>
+      <div class="panel">
+        <h3 style="margin-bottom: var(--space-sm); display: flex; align-items: center; gap: var(--space-sm);"><span class="dot"></span> Dynamic Risk Scoring</h3>
+        <p>Combines document confidence, behavioral priors, network signals, adverse media. Full audit trail in PostgreSQL for regulator explainability.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const merchants = [
+      { name: 'Apex Trading Co', country: '🇮🇳', docs: 4, risk: 15, decision: 'approved', col: 'approved' },
+      { name: 'Meridian Payments', country: '🇸🇬', docs: 4, risk: 22, decision: 'approved', col: 'approved' },
+      { name: 'Nordic Fintech AB', country: '🇸🇪', docs: 4, risk: 18, decision: 'approved', col: 'approved' },
+      { name: 'Sahara Commerce', country: '🇦🇪', docs: 3, risk: 45, decision: 'review', col: 'review' },
+      { name: 'Pacific Rim Ltd', country: '🇭🇰', docs: 3, risk: 52, decision: 'review', col: 'review' },
+      { name: 'Andes Capital', country: '🇨🇱', docs: 2, risk: 68, decision: 'review', col: 'review' },
+      { name: 'Shadow Holdings', country: '🇻🇬', docs: 1, risk: 92, decision: 'rejected', col: 'rejected' },
+      { name: 'Phantom Ventures', country: '🇵🇦', docs: 1, risk: 88, decision: 'rejected', col: 'rejected' },
+      { name: 'Ghost Traders Inc', country: '🇧🇸', docs: 0, risk: 95, decision: 'rejected', col: 'rejected' },
+    ];
+
+    function createMerchantCard(m) {
+      const card = document.createElement('div');
+      card.className = 'merchant-card';
+      card.dataset.name = m.name;
+      card.innerHTML = `
+        <div class="merchant-name">${m.name} <span style="font-family: var(--font-body); font-size: 0.7rem; font-weight: 400; color: var(--steel);">${m.country}</span></div>
+        <div class="merchant-meta">
+          <span>Docs: ${m.docs}/4 verified</span>
+          <span>·</span>
+          <span>Risk: ${m.risk}/100</span>
+        </div>
+        <div class="merchant-docs">
+          ${Array.from({length: 4}, (_, i) => `<span class="doc-badge ${i < m.docs ? 'verified' : 'pending'}">${i < m.docs ? '✓' : '○'}</span>`).join('')}
+        </div>
+        <div class="risk-gauge"><div class="risk-fill ${m.risk < 30 ? 'low' : m.risk < 60 ? 'med' : 'high'}" style="width: ${m.risk}%"></div></div>
+        <span class="merchant-decision ${m.decision}">${m.decision.toUpperCase()}</span>
+      `;
+      return card;
+    }
+
+    function renderKanban() {
+      const cols = {
+        approved: document.getElementById('colApproved'),
+        review: document.getElementById('colReview'),
+        rejected: document.getElementById('colRejected'),
+      };
+      Object.values(cols).forEach(c => { if (c) c.innerHTML = ''; });
+
+      merchants.forEach(m => {
+        if (cols[m.col]) cols[m.col].appendChild(createMerchantCard(m));
+      });
+
+      document.getElementById('cntApproved').textContent = merchants.filter(m => m.col === 'approved').length.toLocaleString();
+      document.getElementById('cntReview').textContent = merchants.filter(m => m.col === 'review').length;
+      document.getElementById('cntRejected').textContent = merchants.filter(m => m.col === 'rejected').length;
+    }
+
+    function animatePipeline() {
+      const btn = document.getElementById('playPipeline');
+      btn.disabled = true;
+      btn.textContent = '⟳ Running...';
+
+      const reviewMerchants = merchants.filter(m => m.col === 'review').slice(0, 2);
+      let delay = 0;
+
+      reviewMerchants.forEach((m, i) => {
+        setTimeout(() => {
+          m.col = 'approved';
+          m.decision = 'approved';
+          renderKanban();
+
+          const cards = document.querySelectorAll('#colApproved .merchant-card');
+          cards.forEach(card => {
+            if (card.dataset.name === m.name) {
+              card.classList.add('moving');
+              setTimeout(() => card.classList.remove('moving'), 600);
+            }
+          });
+        }, delay);
+        delay += 1200;
+      });
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = '▶ Play Pipeline';
+      }, delay + 500);
+    }
+
+    document.getElementById('playPipeline')?.addEventListener('click', animatePipeline);
+    renderKanban();
+
+    // Live ticker simulation
+    let onboarded = 1247, reviewed = 89, rejected = 3;
+    setInterval(() => {
+      if (Math.random() < 0.3) {
+        onboarded++;
+        document.getElementById('cntApproved').textContent = onboarded.toLocaleString();
+      }
+    }, 3000);
+  </script>
+</body>
+</html>

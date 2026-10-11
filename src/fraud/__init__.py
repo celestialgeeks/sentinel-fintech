@@ -10,6 +10,7 @@ from src.fraud.scorer import FraudScorer
 __all__ = [
     "BehavioralProfiling",
     "FraudScorer",
+    "BehavioralProfile",
     "FraudScore",
     "FraudAlert",
     "TriageReport",

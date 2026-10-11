@@ -1,0 +1,46 @@
+# ─── Docker build context ────────────────────────────────────────────────────
+# The two images need src/, config/, alembic/ and the requirement files. Everything
+# here is either a different product (the Next.js app), a local artefact, or a
+# secret — and without these lines the context is ~3 GB (.venv, web/node_modules,
+# web/.next, docs PDFs, the SQLite scratch databases), which Render uploads on
+# every build.
+
+# ─── Secrets — never in an image, never in a build layer ─────────────────────
+.env
+.env.*
+!.env.example
+.secrets/
+web/.env
+web/.env.local
+.vercel/
+.vercel-tmp/
+.mcp.json
+
+# ─── The frontend (deployed separately, on Vercel) ───────────────────────────
+web/
+
+# ─── Local environments, caches, scratch ─────────────────────────────────────
+.git/
+.gitignore
+.venv/
+venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.tools-cache/
+scripts/
+exports/
+.coverage
+*.db
+*.sqlite3
+
+# ─── Documentation and report material ──────────────────────────────────────
+docs/
+*.md
+
+# ─── Not used by either image ────────────────────────────────────────────────
+docker-compose.yml
+render.yaml
+pyproject.toml

@@ -1,0 +1,426 @@
+@import "tailwindcss";
+/* Provides the `animate-in` / `zoom-in-95` utilities the 21st.dev components use
+   (tailwindcss-animate's Tailwind v4 successor). Without it those classes are
+   inert and menus pop with no transition. */
+@import "tw-animate-css";
+
+/*
+ * Sentinel — "Neural Noir" design system.
+ *
+ * Dark monochromatic base (#0a0a0a) with a gold/bronze accent spectrum, radial
+ * dot grid, glassmorphism, and a central glow. The verdict colours (allow / hold
+ * / block) are functional and are never carried by hue alone — every chip pairs a
+ * colour with text + icon — so they stay outside the gold palette on purpose.
+ */
+:root {
+  --canvas: #0a0a0a;
+
+  /* Gold / bronze accent spectrum. */
+  --gold: #a78b71;         /* base gold */
+  --gold-light: #c9b8a0;   /* light gold */
+  --gold-hover: #e8d5b7;   /* hover gold */
+
+  /* Surfaces & hairlines (glass). */
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-strong: rgba(255, 255, 255, 0.06);
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.16);
+
+  --ink-50: #f5f1ea;
+  --ink-300: #b8b0a4;
+  --ink-500: #8a8278;
+
+  /* Functional verdict colours — hue is never the only signal. */
+  --allow: #3dd68c;
+  --hold: #f5b301;
+  --block: #ff6b5e;
+  --degraded: #b39dff;
+  --quarantine: #4fd1e5;
+
+  /* Motion language. */
+  --ease-noir: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/*
+ * shadcn's semantic layer. 21st.dev components are written against these names
+ * (`bg-background`, `border-border`, `bg-accent`, `ring-ring`), so they are not
+ * optional — without them a dropped-in component renders with invisible
+ * surfaces and no borders. Each maps to a Sentinel value so colour stays a single
+ * source of truth. Dark-only: the landing page and the portal wallboard are both
+ * dark, and a light theme becomes a second block of overrides, not a rewrite.
+ */
+:root {
+  --background: #0a0a0a;
+  --foreground: #f5f1ea;
+  --card: #121212;
+  --card-foreground: #f5f1ea;
+  --popover: #121212;
+  --popover-foreground: #f5f1ea;
+  --primary: #a78b71;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #f5f1ea;
+  --muted: #141414;
+  --muted-foreground: #b8b0a4;
+  --accent: #1a1a1a;
+  --accent-foreground: #e8d5b7;
+  --destructive: #ff6b5e;
+  --destructive-foreground: #1a0a08;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.12);
+  --ring: #a78b71;
+  --radius: 1rem;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-hover: var(--gold-hover);
+
+  --color-glass: var(--glass);
+  --color-glass-strong: var(--glass-strong);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-ink-50: var(--ink-50);
+  --color-ink-300: var(--ink-300);
+  --color-ink-500: var(--ink-500);
+
+  --color-allow: var(--allow);
+  --color-hold: var(--hold);
+  --color-block: var(--block);
+  --color-degraded: var(--degraded);
+  --color-quarantine: var(--quarantine);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 8px);
+
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-plex-mono);
+  --font-serif: var(--font-playfair);
+
+  /* Brand easing as a Tailwind transition-timing utility. */
+  --ease-noir: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink-50);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Landing-page type. Tabular figures everywhere a number can change value, so
+ * a live counter does not reflow the row it sits in.
+ */
+.font-mono-ids {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Editorial serif headings (Playfair Display Italic). */
+.font-serif {
+  font-family: var(--font-serif), ui-serif, Georgia, serif;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--gold) 45%, transparent);
+  color: #fff;
+}
+
+/* ─── Neural Noir primitives ──────────────────────────────────────────────── */
+
+/* Radial dot grid overlay — 32px spacing, white at 8%. */
+.bg-dots {
+  background-image: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.08) 1px,
+    transparent 1px
+  );
+  background-size: 32px 32px;
+}
+
+/* Glassmorphism card. */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+}
+
+/* Central glow used behind the hero node. */
+.glow-noir {
+  box-shadow: 0 0 100px rgba(167, 139, 113, 0.2);
+}
+
+/*
+ * Neural connection lines. Gradient stroke light→base gold; a dashed overlay
+ * reads as flow. `pulsing-branch` breathes the opacity 0.4→0.7.
+ */
+.node-line {
+  stroke-width: 2.5;
+  fill: none;
+  animation: pulsing-branch 3.2s var(--ease-noir) infinite;
+}
+
+.node-line-flow {
+  stroke-width: 1.5;
+  fill: none;
+  stroke-dasharray: 5 15;
+  stroke: var(--gold-light);
+  animation: dash-flow 1.6s linear infinite;
+}
+
+@keyframes pulsing-branch {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+/* Entrance reveal — power4.out-like curve on the hero. */
+@keyframes reveal-noir {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal-noir {
+  animation: reveal-noir 1.1s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+}
+
+/* ─── Portal glass system ───────────────────────────────────────────────────
+ * The post-login dashboard borrows the Zenix "Refined Glass" structure — deep
+ * base, layered blur, thin translucent borders lit from above — but keeps the
+ * Neural Noir palette: our #0a0a0a canvas and gold highlight instead of pure
+ * black/white, and the functional verdict hues as the only saturated accents.
+ * Depth comes from stacked glass + a single inner top highlight, never heavy
+ * drop shadows (spec MUST NOT). */
+
+:root {
+  /* Weighty, premium ease for the dashboard (Zenix cubic-bezier(.16,1,.3,1)). */
+  --ease-glass: cubic-bezier(0.16, 1, 0.3, 1);
+  --glass-hairline: 1px solid rgba(255, 255, 255, 0.1);
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+/* Three glass depths. `strong` is the hero/panel blur (35px), `glass` the
+ * standard card, `soft` the sidebar and quiet chrome (20px, lower opacity). */
+.glass-soft {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: var(--glass-hairline);
+  box-shadow: var(--glass-highlight);
+}
+
+.glass-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(35px) saturate(150%);
+  -webkit-backdrop-filter: blur(35px) saturate(150%);
+  border: var(--glass-hairline);
+  box-shadow: var(--glass-highlight);
+}
+
+.glass-strong {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
+  backdrop-filter: blur(35px) saturate(150%);
+  -webkit-backdrop-filter: blur(35px) saturate(150%);
+  border: var(--glass-hairline);
+  box-shadow: var(--glass-highlight);
+}
+
+/*
+ * Liquid Glass: a masked pseudo-element paints a 1px gradient rim that is bright
+ * at the top-left corner and fades out by 60% — the single lighting cue that
+ * makes the flat panels read as glass rather than grey boxes.
+ */
+.liquid-glass {
+  position: relative;
+  border-radius: var(--radius);
+}
+
+.liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.02) 35%, rgba(255, 255, 255, 0) 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Film grain — a fixed, tiled SVG noise at low opacity over the whole canvas. */
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/* Ambient background glow — two large radial lights (warm gold, not pure white)
+ * anchored top-left and bottom-right to give the flat base depth. */
+.ambient-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ambient-glow::before,
+.ambient-glow::after {
+  content: "";
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(55px);
+}
+
+.ambient-glow::before {
+  top: -120px;
+  left: -120px;
+  width: 680px;
+  height: 680px;
+  background: radial-gradient(circle, rgba(167, 139, 113, 0.14) 0%, rgba(167, 139, 113, 0) 70%);
+}
+
+.ambient-glow::after {
+  bottom: -160px;
+  right: -120px;
+  width: 720px;
+  height: 720px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
+/* Entrance reveal with staggered per-child delays (0.05s steps via --stagger). */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  opacity: 0;
+  animation: fade-up 0.6s var(--ease-glass) both;
+  animation-delay: calc(var(--stagger, 0) * 0.05s);
+}
+
+/* The hero line chart draws itself once, then a soft light travels the stroke. */
+@keyframes shimmer-line {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
+@keyframes draw-line {
+  from {
+    stroke-dashoffset: var(--line-length, 1200);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.shimmer-line {
+  stroke-dasharray: 8 6;
+  animation: shimmer-line 24s linear infinite;
+}
+
+.draw-line {
+  stroke-dasharray: var(--line-length, 1200);
+  stroke-dashoffset: var(--line-length, 1200);
+  animation: draw-line 1.6s var(--ease-glass) both;
+}
+
+/* Floating guard card in the sidebar — a slow 6px vertical bob. */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.float {
+  animation: float 5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .node-line,
+  .node-line-flow,
+  .shimmer-line,
+  .draw-line,
+  .float {
+    animation: none;
+  }
+  .reveal-noir,
+  .fade-up {
+    animation: none;
+    opacity: 1;
+  }
+}

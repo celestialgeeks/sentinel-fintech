@@ -1,10 +1,20 @@
 # ─── PostgreSQL / SQLAlchemy ─────────────────────────────────────────────────
+# Documentation only — nothing reads this file; src/core/db.py reads DATABASE_URL.
+# Kept accurate so the two do not disagree about what production is.
+#
+# The database is Supabase Postgres. Use the SESSION-mode pooler, not the direct
+# endpoint: db.<ref>.supabase.co resolves to IPv6 only, which a Render container or
+# a Docker network cannot reach, while aws-0-<region>.pooler.supabase.com:5432 is
+# IPv4 and keeps asyncpg's prepared statements working (port 6543 is transaction
+# mode, which breaks them).
 database:
-  url: "${DATABASE_URL:-postgresql+asyncpg://sentinel:password@localhost:5432/sentinel}"
-  pool_size: 20
-  max_overflow: 10
+  url: "${DATABASE_URL:-postgresql+asyncpg://postgres.<ref>:<db-password>@aws-0-<region>.pooler.supabase.com:5432/postgres?ssl=require}"
+  # A Supabase free project reports max_connections=60 and reserves a chunk of
+  # them for its own services. 5+5 per worker leaves room for a couple of workers;
+  # the previous 20+10 could exhaust the pool on its own.
+  pool_size: 5
+  max_overflow: 5
   pool_pre_ping: true
   echo: false
 
-# Connection strings for direct library consumption
-# SQLAlchemy uses the URL above; psycopg2-binary handles sync when needed.
+# SQLAlchemy uses the URL above; asyncpg is the only driver in the stack.

@@ -11,10 +11,10 @@ from src.api.main import app
 
 def test_fraud_check_endpoint() -> None:
     """POST /api/v1/fraud/check returns a FraudScore."""
-    with patch("src.shared.db.init_db", new=AsyncMock()), \
-         patch("src.shared.cache.RedisClient.ping", new=AsyncMock(return_value=True)), \
-         patch("src.shared.kafka.kafka_consumer") as mock_consumer, \
-         patch("src.shared.kafka.kafka_producer", None):
+    with patch("src.core.db.init_db", new=AsyncMock()), \
+         patch("src.core.cache.RedisClient.ping", new=AsyncMock(return_value=True)), \
+         patch("src.core.kafka_client.kafka_consumer") as mock_consumer, \
+         patch("src.core.kafka_client.kafka_producer", None):
         mock_consumer.start = AsyncMock()
         mock_consumer.stop = AsyncMock()
         client = TestClient(app, raise_server_exceptions=False)
@@ -30,10 +30,10 @@ def test_fraud_check_endpoint() -> None:
 
 def test_fraud_check_high_amount() -> None:
     """High amount endpoint returns valid FraudScore (recommendation depends on history)."""
-    with patch("src.shared.db.init_db", new=AsyncMock()), \
-         patch("src.shared.cache.RedisClient.ping", new=AsyncMock(return_value=True)), \
-         patch("src.shared.kafka.kafka_consumer") as mock_consumer, \
-         patch("src.shared.kafka.kafka_producer", None):
+    with patch("src.core.db.init_db", new=AsyncMock()), \
+         patch("src.core.cache.RedisClient.ping", new=AsyncMock(return_value=True)), \
+         patch("src.core.kafka_client.kafka_consumer") as mock_consumer, \
+         patch("src.core.kafka_client.kafka_producer", None):
         mock_consumer.start = AsyncMock()
         mock_consumer.stop = AsyncMock()
         client = TestClient(app, raise_server_exceptions=False)
@@ -48,10 +48,10 @@ def test_fraud_check_high_amount() -> None:
 
 def test_fraud_alerts_list() -> None:
     """GET /api/v1/fraud/alerts returns a list."""
-    with patch("src.shared.db.init_db", new=AsyncMock()), \
-         patch("src.shared.cache.RedisClient.ping", new=AsyncMock(return_value=True)), \
-         patch("src.shared.kafka.kafka_consumer") as mock_consumer, \
-         patch("src.shared.kafka.kafka_producer", None):
+    with patch("src.core.db.init_db", new=AsyncMock()), \
+         patch("src.core.cache.RedisClient.ping", new=AsyncMock(return_value=True)), \
+         patch("src.core.kafka_client.kafka_consumer") as mock_consumer, \
+         patch("src.core.kafka_client.kafka_producer", None):
         mock_consumer.start = AsyncMock()
         mock_consumer.stop = AsyncMock()
         client = TestClient(app, raise_server_exceptions=False)
@@ -62,10 +62,10 @@ def test_fraud_alerts_list() -> None:
 
 def test_fraud_triage_404() -> None:
     """Triage on non-existent alert returns 404."""
-    with patch("src.shared.db.init_db", new=AsyncMock()), \
-         patch("src.shared.cache.RedisClient.ping", new=AsyncMock(return_value=True)), \
-         patch("src.shared.kafka.kafka_consumer") as mock_consumer, \
-         patch("src.shared.kafka.kafka_producer", None):
+    with patch("src.core.db.init_db", new=AsyncMock()), \
+         patch("src.core.cache.RedisClient.ping", new=AsyncMock(return_value=True)), \
+         patch("src.core.kafka_client.kafka_consumer") as mock_consumer, \
+         patch("src.core.kafka_client.kafka_producer", None):
         mock_consumer.start = AsyncMock()
         mock_consumer.stop = AsyncMock()
         client = TestClient(app, raise_server_exceptions=False)
