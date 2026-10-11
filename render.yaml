@@ -20,6 +20,12 @@
 #   GUARD_HMAC_SECRET             leave blank until the P2P bot signs its callbacks
 #
 # The values already known are written out: they are public by design.
+#
+# STATUS: the live pair was created through the Render API (service
+# `srv-db5kvhtckfvc73aitmeg` at https://sentinel-api-3h2m.onrender.com, Key Value
+# `red-db5ktrvlot8c73fatc5g`), because that toolkit's Blueprint button had not been
+# clicked yet. This file describes the same resources; connecting it as a Blueprint
+# adopts services by name instead of duplicating them.
 
 services:
   # ─── The FastAPI request path ──────────────────────────────────────────────
@@ -35,9 +41,10 @@ services:
     # 0.5c-512mb runs this image with room to spare: the dependency set is the
     # request path only (see requirements-api.txt), and the ML libraries that
     # would need `1c-2g` are optional imports that degrade to fallbacks.
-    # Use `free` only to try it out: it sleeps after 15 idle minutes, so the
-    # first merchant of the day waits ~60s for a cold start.
-    plan: 0.5c-512mb
+    # `free` is what the live service runs on today: it sleeps after 15 idle
+    # minutes, so the first merchant of the day waits ~60s for a cold start.
+    # Upgrade here (or in the dashboard) when the demo turns into traffic.
+    plan: free
     # Separate from ./Dockerfile, which is the docker compose research image
     # (full requirements, ports 8000, no $PORT handling).
     dockerfilePath: ./Dockerfile.render
@@ -82,9 +89,12 @@ services:
       # ─── CORS: the deployed portal origin ─────────────────────────────────
       # Wildcard `*` cannot carry credentials (src/api/main.py sets
       # allow_credentials=False for it), so the frontend origin must be listed.
-      # Add the custom domain here when the site moves off *.vercel.app.
+      # `sentinal-criminal` is the production alias Vercel gives this project;
+      # the `web-*.vercel.app` deployment URLs are behind SSO and are not origins
+      # a merchant's browser will ever use. localhost is listed so the portal can
+      # be developed against the hosted API.
       - key: CORS_ORIGINS
-        value: https://web-five-theta-px9lht1ejw.vercel.app
+        value: https://sentinal-criminal.vercel.app,http://localhost:3000
 
       # ─── Guard behaviour ──────────────────────────────────────────────────
       - key: DEMO_MODE
